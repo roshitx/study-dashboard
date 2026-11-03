@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.output/
+.tanstack/
+.wrangler/
+.local/
+.dev.vars
+.env
+.env.*
+!.env.example
+*.log
+worker-configuration.d.ts
+University.zip
+package-lock.json
+npm-shrinkwrap.json

@@ -1,5 +1,13 @@
 # Hasil validasi handoff
 
+## Issue #9: import lokal, 3 November 2026
+
+- Panel Catatan menerima `.md` UTF-8 dan `.zip` hanya di browser; mempertahankan bytes file valid dalam memori, belum menghubungkan hasil ke editor/navigasi (M1.2+).
+- Batas sesi: 32 MiB input, 2.000 entri, 64 MiB bytes ekstraksi, 2 MiB per file. ZIP diproses sequential memakai zip.js; sink membatasi bytes aktual, metadata ukuran tidak dipercaya. Traversal/absolute path/backslash, symlink, file khusus, encrypted ZIP, unsupported extension, NUL/invalid UTF-8 ditolak dengan diagnostic. ZIP rusak memiliki diagnostic arsip.
+- Frozen install, 10 test, client/Worker build dan typecheck lulus. Regression meliputi sibling valid di ZIP campuran, traversal/symlink/invalid UTF-8, input/entry/file limits, ukuran ZIP dipalsukan dan sumber tetap identik. Warning sourcemap CSS lama tetap ada.
+- Smoke Chromium via file picker ZIP sintetis: 1 file diterima, 2 diagnostic, 3 entri; tutup snapshot menghapus laporan. Viewport 390 × 844 tidak overflow; screenshot diperiksa. Resource timing tidak menunjukkan fetch/XHR selama import; implementasi tidak memiliki transport upload.
+- Obscura dicoba terlebih dahulu, hidrasi tidak teramati; fallback Chromium disetujui pengguna. Jev tidak tersedia karena `JEV_API_KEY` belum diatur. Audit accessibility penuh dan acceptance University nyata bukan bagian bukti ini.
+
 ## Setup Bun dan shadcn, 3 November 2026
 
 Lingkungan: macOS arm64, Bun 1.4.0. Package manager, script dan test runner memakai Bun; `bun.lock` menggantikan `package-lock.json`. Tailwind v4 dan shadcn/ui Base UI preset Nova terpasang; baru CTA pembuka catatan memakai Button shadcn, bukan migrasi seluruh tampilan.

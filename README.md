@@ -52,7 +52,9 @@ ZIP sumber tidak dibundel ulang ke repository atau aset browser. Bila diperlukan
 python3 scripts/vault_inventory.py '.local/inputs/University.zip' --output .local/vault-inventory.json
 ```
 
-Script hanya menghasilkan manifest path/hash/frontmatter mentah, bukan mengimpor note ke aplikasi. M1 mengimplementasikan importer konten browser dan semantik metadata dengan benar.
+Script hanya menghasilkan manifest path/hash/frontmatter mentah, bukan mengimpor note ke aplikasi.
+
+Import awal tersedia di tab **Catatan → Import snapshot lokal**. Pilih `.md` UTF-8 atau `.zip`; lihat file diterima dan diagnostic, lalu **Tutup snapshot** untuk melepas laporan dari memori. Maksimum 32 MiB input, 2.000 entri, 64 MiB ekstraksi, 2 MiB per file. Tidak ada upload atau perubahan sumber. Lampiran belum diimpor; hasil belum menjadi navigasi/editor (M1.2 dan seterusnya).
 
 ## Stack terkunci
 

@@ -56,6 +56,8 @@ Script hanya menghasilkan manifest path/hash/frontmatter mentah, bukan mengimpor
 
 Import awal tersedia di tab **Catatan → Import snapshot lokal**. Pilih `.md` UTF-8 atau `.zip`; lihat file diterima dan diagnostic, lalu **Tutup snapshot** untuk melepas laporan dari memori. Maksimum 32 MiB input, 2.000 entri, 64 MiB ekstraksi, 2 MiB per file. Tidak ada upload atau perubahan sumber. Lampiran belum diimpor; hasil belum menjadi navigasi/editor (M1.2 dan seterusnya).
 
+Sebelum memilih file, atur **Canonical root** dan prefix sumber (satu per baris). Prefix hanya dipetakan pada batas folder; path lain tetap utuh. Panel **Indeks dan metadata** menampilkan SHA-256, source path, properties dan diagnostic YAML. Duplikat identik pada canonical path sama digabung; konten berbeda tetap sebagai versi konflik. Tutup snapshot sebelum mengganti konfigurasi. Navigasi semester/course dan editor masih demo terpisah.
+
 ## Stack terkunci
 
 TanStack Start/Router, React, TypeScript, Vite, Cloudflare Vite plugin dan Wrangler. Bun mengelola dependency exact melalui package.json dan bun.lock. UI memakai shadcn/ui Base UI, preset Nova dan Tailwind CSS v4; alias `@/` menunjuk `src/`. Tambahkan komponen resmi sesuai kebutuhan dengan `bunx --bun shadcn@latest add @shadcn/<komponen>` setelah membaca dokumentasinya. D1 diusulkan untuk metadata aplikasi; R2 existing tetap sumber vault terenkripsi. Google Sheets/Calendar menggunakan API resmi milik aplikasi ini dengan OAuth terpisah, bukan sesi plugin ChatGPT.

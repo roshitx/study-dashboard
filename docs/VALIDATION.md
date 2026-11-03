@@ -1,5 +1,13 @@
 # Hasil validasi handoff
 
+## Issue #10: indeks source-preserving, 3 November 2026
+
+- Root/prefix configurable dipetakan hanya pada batas folder; source path, raw bytes, BOM/CRLF dan frontmatter asli tetap disimpan. Path tak cocok prefix tetap utuh, bukan ditebak dari basename.
+- Properties memakai YAML core tanpa custom tags; unknown fields dipertahankan, kode dan nomor modul/sesi tidak disatukan. Invalid YAML/alias dan unquoted wikilink non-string diberi diagnostic tanpa rewrite sumber. Indeks menggunakan SHA-256; same canonical path/hash digabung dengan daftar source path, beda hash mempertahankan semua versi konflik.
+- 13 test, frozen install, build/typecheck lulus. Regression mencakup bytes/BOM/CRLF, unknown/null/false, field akademik independen, prefix boundary, hash diketahui, dedup/conflict dan YAML ambigu/alias/invalid.
+- Smoke Chromium ZIP sintetis dengan dua prefix: 1 path unik, 1 duplikat identik, 1 konflik; dua versi dan warning wikilink terlihat. Reset melepas index/report dan membuka konfigurasi lagi. Mobile 390px tanpa overflow; tidak ada fetch/XHR tercatat. Screenshot diperiksa; Obscura tidak terhidrasi, fallback disetujui.
+- Belum menghubungkan indeks ke course/semester/search/editor; itu M1.3+. Tidak ada penerimaan source pengguna nyata atau integrasi provider dalam bukti ini. Warning sourcemap toolchain tetap; Jev terblokir JEV_API_KEY.
+
 ## Issue #9: import lokal, 3 November 2026
 
 - Panel Catatan menerima `.md` UTF-8 dan `.zip` hanya di browser; mempertahankan bytes file valid dalam memori, belum menghubungkan hasil ke editor/navigasi (M1.2+).

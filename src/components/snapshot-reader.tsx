@@ -17,8 +17,7 @@ function Mermaid({ source }: { source: string }) {
 }
 
 function Callout({ children }: { children: ReactNode }) {
-  const marker = /^\[!([\w-]+)\][+-]?\s*/.exec(plain(children).trimStart())
-  return <blockquote className="border-l-2 border-border pl-4">{marker && <strong>{marker[1]}</strong>}{children}</blockquote>
+  return <blockquote className="border-l-2 border-border pl-4">{children}</blockquote>
 }
 function plain(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node)
@@ -52,6 +51,17 @@ export function SnapshotReader({ index, note, onNavigate }: { index: SnapshotInd
   const wikilinks = () => (tree: Root) => {
     function walk(node: Root | RootContent) {
       if (!('children' in node) || ['link', 'code', 'inlineCode', 'html'].includes(node.type)) return
+      if (node.type === 'blockquote') {
+        const paragraph = node.children[0]
+        const first = paragraph?.type === 'paragraph' ? paragraph.children[0] : undefined
+        if (paragraph?.type === 'paragraph' && first?.type === 'text') {
+          const marker = /^\[!([\w-]+)\][+-]?[ \t]*/.exec(first.value)
+          if (marker) {
+            first.value = first.value.slice(marker[0].length)
+            paragraph.children.unshift({ type: 'strong', children: [{ type: 'text', value: marker[1]! + ': ' }] })
+          }
+        }
+      }
       const parent = node as Parent // Markdown nodes with children are parent nodes.
       parent.children = parent.children.flatMap((child): RootContent[] => {
         if (child.type !== 'text') { walk(child); return [child] }

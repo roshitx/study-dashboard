@@ -61,7 +61,7 @@ Build mengeluarkan peringatan CSS sourcemap dari toolchain; hasil build berhasil
 
 ## Reader snapshot (#12)
 
-- Frozen install, 17 tests/60 assertions, client/Worker build dan typecheck lulus. Resolver diuji untuk relative path, source prefix, alias/heading, ambiguity, missing, skema berbahaya dan traversal. Render regression membuktikan tabel/math tampil, HTML aktif dibuang, query plugin tetap teks.
+- Frozen install, 17 tests/62 assertions, client/Worker build dan typecheck lulus. Resolver diuji untuk relative path, source prefix, alias/heading, ambiguity, missing, skema berbahaya dan traversal. Render regression membuktikan tabel/math tampil, HTML aktif dibuang, query plugin tetap teks. Review callout diperbaiki pada AST: marker `[!WARNING]` menjadi label tebal `WARNING:` tanpa marker mentah; diverifikasi lewat render React aktual.
 - Smoke Chromium yang disetujui memakai Markdown sintetis: tabel dan KaTeX tampil; screenshot menunjukkan Mermaid Mulai/Selesai; callout WARNING tampil; tautan missing/unsafe memberi alert; tautan heading scroll ke tujuan. `window.__unsafe` tetap false, tidak ada elemen gambar remote. Mobile 390×844 tanpa overflow; browser page errors kosong.
 - Obscura tetap menampilkan shell tanpa hidrasi/label; tidak diklaim kompatibel. Mermaid memakai sandbox allow-scripts tanpa allow-same-origin dan CSP connect-src none; source tidak diunggah. Frame cross-origin tidak dapat diinspeksi lewat helper frame agent-browser, bukti Mermaid adalah screenshot aktual.
 - Bukti ini bukan acceptance source pengguna, audit semua grammar Mermaid, live provider atau persistence produksi. Warning CSS sourcemap toolchain masih ada.

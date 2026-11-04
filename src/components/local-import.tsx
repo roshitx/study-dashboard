@@ -19,7 +19,7 @@ export function LocalImport() {
     const unload = (event: BeforeUnloadEvent) => { if (dirty || unexported) { event.preventDefault(); event.returnValue = '' } }
     const navigate = (event: MouseEvent) => {
       const target = event.target
-      if (!(target instanceof Element) || target.closest('[data-snapshot-editor]')) return
+      if (!(target instanceof Element) || target.closest('[data-snapshot-editor],[data-session-logout]')) return
       const control = target.closest('button,a,input,select,summary')
       if (!control) return
       const leaving = !target.closest('#import-workspace') || control.textContent === 'Tutup snapshot' || control.id === 'local-files'

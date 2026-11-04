@@ -4,8 +4,9 @@ import { notes, offerings, semesters } from '../data/demo'
 import { integrationStates } from '../integrations/contracts'
 import { Button } from '@/components/ui/button'
 import { LocalImport } from '@/components/local-import'
+import { OwnerSession } from '@/components/owner-session'
 
-export const Route = createFileRoute('/')({ component: Dashboard })
+export const Route = createFileRoute('/')({ component: () => <OwnerSession><Dashboard /></OwnerSession> })
 function Dashboard() {
   const [semesterId, setSemesterId] = useState('demo-s2')
   const [tab, setTab] = useState<'today' | 'courses' | 'notes' | 'connections'>('today')

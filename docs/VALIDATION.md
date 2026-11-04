@@ -82,11 +82,18 @@ Build mengeluarkan peringatan CSS sourcemap dari toolchain; hasil build berhasil
 - Chromium disetujui setelah Obscura tanpa hidrasi: import kedua ZIP privat menampilkan counts di atas, fetch/XHR 0; tidak mengambil screenshot sumber privat. Fixture sintetis: Enter pada link Recently Updated membuka reader; query unsupported tampil diagnostic, kode tidak berjalan; edit/save/export kedua versi berhasil. Mobile 390×844 tanpa overflow setelah grid main diberi min-width 0. Screenshot hanya sintetis.
 - Scan 440 sampel baris privat panjang pada 21 artifact JS/HTML/map/JSON dist: 0 file cocok. Ini pemeriksaan sampling kebocoran plaintext, bukan bukti kriptografis universal. File privat hanya dipilih browser/lokal; tidak ada endpoint pengunggah. Jev tetap unavailable (JEV_API_KEY); warning CSS sourcemap tetap.
 
+## Owner auth/session lokal (#15)
+
+- Migration auth berhasil pada D1 lokal; tidak ada database remote dibuat. Worker unconfigured: session/logout 503 not_configured dan no-store. Konfigurasi sintetis: session tanpa cookie 401; foreign-Origin logout 403; same-origin empty-body logout 204 + cookie expiry; login 302 ke Google dengan state/nonce/S256/scopes identitas saja. Redirect tidak diikuti memakai client sintetis.
+- Frozen install, 21 tests/108 assertions, client/Worker build dan typecheck dengan typegen lulus. Tests mencakup owner mismatch, expiry, hashed token, revocation, browser-bound transaction, state mismatch/replay/expiry, redirect injection dan Origin. SQLite nyata menguji SQL DELETE RETURNING; ini bukan bukti Google callback sukses. Scan 21 artifact JS/HTML/map/JSON: synthetic secret dari .dev.vars tidak ditemukan. Konfigurasi sintetis dihapus sesudah smoke.
+- Chromium sementara disetujui setelah Obscura kembali tanpa hidrasi. Synthetic import, buka reader/editor, dirty draft, logout: workspace/draft/text hilang; buka ruang kosong: files 0, tanpa summary/draft. Dirty navigation guard diperbaiki agar logout tidak diblokir confirmation. Keyboard Enter logout, 390px tanpa overflow; configured browser menerima Session server ditutup. Tidak ada page errors tercatat.
+- Dependency lokal Wrangler sempat memiliki nested workerd tidak lengkap/invalid signature; frozen force reinstall memperbaiki, typegen/migration berhasil. Dua dev server berbagi optimizer sempat memberi stale chunk; restart --force mengatasi. Jev unavailable karena JEV_API_KEY. Login Google nyata, callback sukses dengan signature nyata dan revocation session hasil provider belum diuji: OAuth client/owner belum tersedia. Tidak deploy; #15 live acceptance belum dinyatakan lulus.
+
 ## Belum diverifikasi / belum diimplementasikan
 
 - Audit accessibility end-to-end dan kompatibilitas Obscura belum tuntas; smoke test browser setup terbaru tercatat di atas.
 - DQL penuh/DataviewJS/Tasks, Canvas, PDF/image viewer serta durable editing belum ada. Subset DQL lokal dan acceptance snapshot tersedia di bawah; arsip Inggris independen belum tersedia untuk verifikasi ulang.
-- Autentikasi, otorisasi runtime, R2/D1 bindings, RClone Crypt decryption/interoperability dan konflikt recovery belum ada.
+- Google login nyata/non-owner provider belum diverifikasi; auth/session D1 lokal tersedia. R2, D1 akademik remote, RClone Crypt interoperability dan conflict recovery belum ada.
 - Google Sheets/Calendar OAuth, read/write dan provider readback belum dilakukan.
 - AI model, generasi soal, scoring dan planner belum ada.
 - Remote deployment dan migration produksi tidak dilakukan.

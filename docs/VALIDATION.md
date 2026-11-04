@@ -1,5 +1,14 @@
 # Hasil validasi handoff
 
+## Issue #11: navigasi dan pencarian snapshot, 4 November 2026
+
+- Explorer snapshot memakai konfigurasi JSON semester/offering, bukan array demo. Semester personal/academicPeriod UT dan offering terpisah; credits null tetap unknown. Prefix offering tidak boleh overlap. Catatan tanpa mapping tetap dapat ditemukan melalui filter belum dipetakan.
+- Pencarian path/isi seluruh versi konflik dipersiapkan sekali per index/config di memori browser. Tutup snapshot unmount explorer dan melepas indeks pencarian, konfigurasi, query, pilihan dan error; tidak ada persistence atau upload.
+- Frozen install, 15 tests, build dan typecheck lulus. Tests mencakup semester 3 dari konfigurasi, periode/null credits, mapping invalid/overlap, isolasi offering, unmapped dan pencarian versi konflik.
+- Chromium: ZIP sintetis 486 note, konfigurasi semester 1/3 untuk kode course sama; filter s3 + earlier menghasilkan 0, s3 + later menghasilkan 243. Konfigurasi invalid menampilkan error dan mempertahankan konfigurasi valid. Close/reimport mengosongkan query/semester/config/error. Mobile 390px tanpa overflow, tanpa page errors. Obscura tidak terhidrasi; fallback disetujui.
+- Benchmark browser sesudah indexing: 486 note sintetis, 200 query, p95 0,30 ms untuk fungsi pencarian (target <500 ms). Tidak mencakup render React atau source pengguna nyata; bukan klaim performa seluruh vault.
+- Reader/editor snapshot belum termasuk issue ini; editor demo diberi identitas terpisah. Warning sourcemap CSS toolchain tetap.
+
 ## Issue #10: indeks source-preserving, 3 November 2026
 
 - Root/prefix configurable dipetakan hanya pada batas folder; source path, raw bytes, BOM/CRLF dan frontmatter asli tetap disimpan. Path tak cocok prefix tetap utuh, bukan ditebak dari basename.

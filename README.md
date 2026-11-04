@@ -54,9 +54,11 @@ python3 scripts/vault_inventory.py '.local/inputs/University.zip' --output .loca
 
 Script hanya menghasilkan manifest path/hash/frontmatter mentah, bukan mengimpor note ke aplikasi.
 
-Import awal tersedia di tab **Catatan → Import snapshot lokal**. Pilih `.md` UTF-8 atau `.zip`; lihat file diterima dan diagnostic, lalu **Tutup snapshot** untuk melepas laporan dari memori. Maksimum 32 MiB input, 2.000 entri, 64 MiB ekstraksi, 2 MiB per file. Tidak ada upload atau perubahan sumber. Lampiran belum diimpor; hasil belum menjadi navigasi/editor (M1.2 dan seterusnya).
+Import tersedia di tab **Catatan → Import snapshot lokal**. Pilih `.md` UTF-8 atau `.zip`; lihat file diterima dan diagnostic, lalu **Tutup snapshot** untuk melepas laporan, indeks dan pencarian dari memori. Maksimum 32 MiB input, 2.000 entri, 64 MiB ekstraksi, 2 MiB per file. Tidak ada upload atau perubahan sumber. Lampiran dan reader/editor snapshot belum tersedia.
 
-Sebelum memilih file, atur **Canonical root** dan prefix sumber (satu per baris). Prefix hanya dipetakan pada batas folder; path lain tetap utuh. Panel **Indeks dan metadata** menampilkan SHA-256, source path, properties dan diagnostic YAML. Duplikat identik pada canonical path sama digabung; konten berbeda tetap sebagai versi konflik. Tutup snapshot sebelum mengganti konfigurasi. Navigasi semester/course dan editor masih demo terpisah.
+Sebelum memilih file, atur **Canonical root** dan prefix sumber (satu per baris). Prefix hanya dipetakan pada batas folder; path lain tetap utuh. Panel **Indeks dan metadata** menampilkan SHA-256, source path, properties dan diagnostic YAML. Duplikat identik pada canonical path sama digabung; konten berbeda tetap sebagai versi konflik. Tutup snapshot sebelum mengganti konfigurasi import.
+
+**Jelajahi snapshot lokal** menyediakan filter semester/mata kuliah dan pencarian path/isi. Buka konfigurasi JSON untuk menambah semester dan offering sesuai contoh di panel; `academicPeriod` dan `credits` boleh null. `pathPrefix` harus sesuai folder canonical dan tidak overlap dengan offering lain. Tanpa mapping, note tetap tersedia sebagai belum dipetakan; tidak ada fallback demo. Konfigurasi invalid menampilkan error tanpa menghapus konfigurasi valid. Tutup snapshot menghapus seluruh state explorer. Selector semester global dan editor lama tetap berlabel demo, terpisah dari snapshot.
 
 ## Stack terkunci
 

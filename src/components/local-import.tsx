@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { importLocalFiles, type ImportReport } from '@/integrations/local-import'
 import { Button } from '@/components/ui/button'
 import { indexSnapshot, type SnapshotIndex } from '@/domain/snapshot-index'
+import { SnapshotExplorer } from '@/components/snapshot-explorer'
 
 export function LocalImport() {
   const [report, setReport] = useState<ImportReport | null>(null)
@@ -40,6 +41,7 @@ export function LocalImport() {
         <details><summary>File diterima ({report.files.length})</summary><ul>{report.files.map((f, i) => <li key={i} className="path">{f.path} · {f.bytes.length} byte</li>)}</ul></details>
         {index && <>
           <p role="status">{index.notes.length} path unik; {index.duplicateCount} duplikat identik; {index.conflictCount} konflik.</p>
+          <SnapshotExplorer index={index} />
           <details><summary>Indeks dan metadata</summary>{index.notes.map(note => <article key={note.canonicalPath}>
             <h3 className="path">{note.canonicalPath}{note.versions.length > 1 ? ' · Konflik: semua versi dipertahankan' : ''}</h3>
             {note.versions.map(version => <div key={version.hash}>

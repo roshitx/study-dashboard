@@ -80,7 +80,7 @@ export function SnapshotReader({ index, note, onNavigate }: { index: SnapshotInd
   return <article className="snapshot-reader min-w-0 break-words [&_th]:p-2 [&_td]:p-2 [&_th]:border [&_td]:border [&_p]:my-3 [&_li]:ml-5 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg" aria-label="Reader snapshot">
     <h3 className="break-all">{note.canonicalPath}</h3>
     <p>Snapshot lokal · hanya baca. Sumber tidak diubah.</p>
-    {note.versions.length > 1 && <label>Versi konflik <select value={versionIndex} onChange={e => setVersionIndex(Number(e.target.value))}>{note.versions.map((v, i) => <option key={v.hash} value={i}>{v.hash}</option>)}</select></label>}
+    {note.versions.length > 1 && <label>Versi konflik <select className="w-full min-w-0 max-w-full" value={versionIndex} onChange={e => setVersionIndex(Number(e.target.value))}>{note.versions.map((v, i) => <option key={v.hash} value={i}>{v.hash}</option>)}</select></label>}
     {version.diagnostics.map(d => <p key={d} role="note">{d}</p>)}
     {notice && <p role="alert">{notice}</p>}
     <ReactMarkdown skipHtml remarkPlugins={[remarkGfm, remarkMath, wikilinks]} rehypePlugins={[[rehypeKatex, { trust: false, strict: 'error' }]]} urlTransform={url => url} components={{

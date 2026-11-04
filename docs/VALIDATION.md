@@ -66,6 +66,13 @@ Build mengeluarkan peringatan CSS sourcemap dari toolchain; hasil build berhasil
 - Obscura tetap menampilkan shell tanpa hidrasi/label; tidak diklaim kompatibel. Mermaid memakai sandbox allow-scripts tanpa allow-same-origin dan CSP connect-src none; source tidak diunggah. Frame cross-origin tidak dapat diinspeksi lewat helper frame agent-browser, bukti Mermaid adalah screenshot aktual.
 - Bukti ini bukan acceptance source pengguna, audit semua grammar Mermaid, live provider atau persistence produksi. Warning CSS sourcemap toolchain masih ada.
 
+## Editor/export snapshot (#13)
+
+- Frozen install, 18 tests/68 assertions, client/Worker build dan typecheck lulus. Round-trip memakai importer asli: bytes tidak berubah identik; edit paragraf mempertahankan BOM, CRLF, komentar/unknown YAML, false/null; dua ZIP lapisan diimpor bersama mempertahankan kedua versi konflik pada canonical path sama. NUL ditolak tanpa menyimpan draf.
+- Chromium fallback disetujui setelah Obscura kembali tanpa hidrasi. Smoke: edit/simpan menghasilkan dua versi; batal navigasi tab/tutup mempertahankan editor; beforeunload cancelable dibatalkan selama draf atau versi belum diexport; filter/import dinonaktifkan saat dirty. Dua tombol export mengirim download dan membersihkan flag setelah semua lapisan. Native dialog refresh OS tidak diotomasi; handler beforeunload diuji melalui event browser.
+- Mobile 390×844 dengan dua versi: editor terpasang dan tanpa overflow setelah select hash dibatasi lebar. Screenshot lokal sintetis; tidak ada source pengguna yang diunggah. Bukti download UI bukan bukti browser selesai menulis disk; payload ZIP diuji lewat round-trip domain/importer.
+- Simpan hanya memori sesi, tidak ada write R2 atau persistence produksi. Export satu ZIP per lapisan menghindari nama entri duplikat; semua lapisan harus dipilih bersama saat reimport. Jev unavailable karena JEV_API_KEY belum dikonfigurasi; warning CSS sourcemap tetap.
+
 ## Belum diverifikasi / belum diimplementasikan
 
 - Audit accessibility end-to-end dan kompatibilitas Obscura belum tuntas; smoke test browser setup terbaru tercatat di atas.

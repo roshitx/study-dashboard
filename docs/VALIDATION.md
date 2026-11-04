@@ -74,10 +74,18 @@ Build mengeluarkan peringatan CSS sourcemap dari toolchain; hasil build berhasil
 - Simpan hanya memori sesi, tidak ada write R2 atau persistence produksi. Export satu ZIP per lapisan menghindari nama entri duplikat; semua lapisan harus dipilih bersama saat reimport. Jev unavailable karena JEV_API_KEY belum dikonfigurasi; warning CSS sourcemap tetap.
 - Review save-state: setelah simpan editor memilih indeks versi hasil save, bukan mengembalikan body versi dasar. Chromium membuktikan dua save berurutan mempertahankan body masing-masing, selector 1 lalu 2, total tiga versi, dirty false; tests/build/typecheck tetap lulus.
 
+## Query lokal dan acceptance snapshot (#14)
+
+- Frozen install, 19 tests/78 assertions, build/typecheck lulus. Tests mencakup source-prefix folder boundary, filter/sort/limit, null, seluruh versi konflik dan penolakan query arbitrer. Bytes query dan checkbox jawaban tidak diubah; tidak ada konversi checkbox menjadi task/planner.
+- Importer dan indeks aktual dijalankan atas University.zip lokal: 486 catatan unik, 13 Course Hub, 486 versi, 0 konflik; 394 versi dengan diagnostic metadata (termasuk related ambigu, bukan semuanya kegagalan YAML). 12 blok DQL, 0 gagal/tidak didukung. Angka ini bukti sumber, bukan batas/konstanta importer.
+- Arsip Inggris terpisah tidak tersedia di workspace/Downloads. Subset privat 51 Markdown Inggris diambil byte-identik dari University untuk uji tambahan ZIP: total 537 file diterima, 51 duplikat identik, tetap 486 catatan. Ini menguji dedup 51 file yang sama, bukan re-verifikasi arsip Inggris independen. 586 diagnostic import: 538 entri metadata macOS dan 48 non-Markdown. Tidak ada konten privat/manifest yang dikomit.
+- Chromium disetujui setelah Obscura tanpa hidrasi: import kedua ZIP privat menampilkan counts di atas, fetch/XHR 0; tidak mengambil screenshot sumber privat. Fixture sintetis: Enter pada link Recently Updated membuka reader; query unsupported tampil diagnostic, kode tidak berjalan; edit/save/export kedua versi berhasil. Mobile 390×844 tanpa overflow setelah grid main diberi min-width 0. Screenshot hanya sintetis.
+- Scan 440 sampel baris privat panjang pada 21 artifact JS/HTML/map/JSON dist: 0 file cocok. Ini pemeriksaan sampling kebocoran plaintext, bukan bukti kriptografis universal. File privat hanya dipilih browser/lokal; tidak ada endpoint pengunggah. Jev tetap unavailable (JEV_API_KEY); warning CSS sourcemap tetap.
+
 ## Belum diverifikasi / belum diimplementasikan
 
 - Audit accessibility end-to-end dan kompatibilitas Obscura belum tuntas; smoke test browser setup terbaru tercatat di atas.
-- Query Dataview/Tasks, Canvas, PDF/image viewer serta durable editing belum ada. Reader snapshot aman dan import sudah tersedia; acceptance vault nyata tetap #14.
+- DQL penuh/DataviewJS/Tasks, Canvas, PDF/image viewer serta durable editing belum ada. Subset DQL lokal dan acceptance snapshot tersedia di bawah; arsip Inggris independen belum tersedia untuk verifikasi ulang.
 - Autentikasi, otorisasi runtime, R2/D1 bindings, RClone Crypt decryption/interoperability dan konflikt recovery belum ada.
 - Google Sheets/Calendar OAuth, read/write dan provider readback belum dilakukan.
 - AI model, generasi soal, scoring dan planner belum ada.

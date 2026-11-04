@@ -29,7 +29,7 @@ export function LocalImport() {
     document.addEventListener('click', navigate, true)
     return () => { window.removeEventListener('beforeunload', unload); document.removeEventListener('click', navigate, true) }
   }, [dirty, unexported])
-  return <section id="import-workspace" className="card" aria-labelledby="import-title">
+  return <section id="import-workspace" className="card min-w-0 max-w-full" aria-labelledby="import-title">
     <h2 id="import-title">Import snapshot lokal</h2>
     <p>File hanya dibaca di browser. Sumber tidak diubah atau diunggah. Snapshot belum masuk navigasi/editor demo.</p>
     <p>Markdown UTF-8 atau ZIP: maksimum 32 MiB input, 2.000 entri, 64 MiB ekstraksi, 2 MiB per file. Lampiran belum didukung.</p>

@@ -9,6 +9,7 @@ import 'katex/dist/katex.min.css'
 import type { IndexedNote, SnapshotIndex } from '@/domain/snapshot-index'
 import { headingId, resolveSnapshotLink } from '@/domain/snapshot-links'
 import { Button } from './ui/button'
+import { SnapshotQuery } from './snapshot-queries'
 
 function Mermaid({ source }: { source: string }) {
   // Opaque sandbox: generated SVG and diagram directives never enter the app document.
@@ -101,7 +102,7 @@ export function SnapshotReader({ index, note, onNavigate }: { index: SnapshotInd
       pre: ({ children }) => <div className="max-w-full overflow-x-auto"><pre>{children}</pre></div>,
       table: ({ children }) => <div className="max-w-full overflow-x-auto"><table>{children}</table></div>,
       blockquote: ({ children }) => <Callout>{children}</Callout>,
-      code: ({ className, children }) => className === 'language-mermaid' ? <Mermaid source={String(children)} /> : <code className={className}>{children}</code>,
+      code: ({ className, children }) => className === 'language-mermaid' ? <Mermaid source={String(children)} /> : className === 'language-dataview' ? <SnapshotQuery index={index} note={note} source={String(children)} onNavigate={onNavigate} /> : <code className={className}>{children}</code>,
     }}>{body}</ReactMarkdown>
   </article>
 }

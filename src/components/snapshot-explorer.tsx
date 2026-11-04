@@ -3,8 +3,9 @@ import type { SnapshotIndex } from '@/domain/snapshot-index'
 import { parseSnapshotConfig, prepareSnapshotSearch, searchSnapshot, type SnapshotConfig } from '@/domain/snapshot-navigation'
 import { Button } from '@/components/ui/button'
 import { SnapshotReader } from './snapshot-reader'
+import { SnapshotEditor } from './snapshot-editor'
 
-export function SnapshotExplorer({ index }: { index: SnapshotIndex }) {
+export function SnapshotExplorer({ index, onSave, onDirty, dirty }: { index: SnapshotIndex; onSave: (path: string, bytes: Uint8Array) => Promise<number>; onDirty: (dirty: boolean) => void; dirty: boolean }) {
   const [source, setSource] = useState('{\n  "semesters": [],\n  "offerings": []\n}')
   const [config, setConfig] = useState<SnapshotConfig>({ semesters: [], offerings: [] })
   const [error, setError] = useState('')
@@ -32,21 +33,22 @@ export function SnapshotExplorer({ index }: { index: SnapshotIndex }) {
     </details>
     {error && <p role="alert">Konfigurasi gagal: {error} Konfigurasi valid sebelumnya tetap dipakai.</p>}
     <label htmlFor="snapshot-semester">Semester snapshot</label>
-    <select id="snapshot-semester" className="w-full min-w-0 max-w-full" value={semester} onChange={e => { setSemester(e.target.value); setOffering(''); setSelected('') }}>
+    <select id="snapshot-semester" disabled={dirty} className="w-full min-w-0 max-w-full" value={semester} onChange={e => { setSemester(e.target.value); setOffering(''); setSelected('') }}>
       <option value="">Semua semester / belum dipetakan</option>
       {config.semesters.map(s => <option key={s.id} value={s.id}>Semester {s.number} · Periode UT: {s.academicPeriod ?? 'belum dipetakan'}</option>)}
     </select>
     <label htmlFor="snapshot-offering">Mata kuliah snapshot</label>
-    <select id="snapshot-offering" className="w-full min-w-0 max-w-full" value={offering} onChange={e => { setOffering(e.target.value); setSelected('') }}>
+    <select id="snapshot-offering" disabled={dirty} className="w-full min-w-0 max-w-full" value={offering} onChange={e => { setOffering(e.target.value); setSelected('') }}>
       <option value="">Semua mata kuliah</option>
       {!semester && <option value="__unmapped">Belum dipetakan</option>}
       {courses.map(o => <option key={o.id} value={o.id}>{o.courseCode} · {o.name} · {o.credits === null ? 'SKS belum dikonfirmasi' : `${o.credits} SKS`}</option>)}
     </select>
     <label htmlFor="snapshot-query">Cari path atau isi snapshot</label>
-    <input id="snapshot-query" className="w-full min-w-0" type="search" value={query} onChange={e => { setQuery(e.target.value); setSelected('') }} />
+    <input id="snapshot-query" disabled={dirty} className="w-full min-w-0" type="search" value={query} onChange={e => { setQuery(e.target.value); setSelected('') }} />
     <p role="status">{results.length} catatan cocok dari {searchable.length} path snapshot.</p>
     {!results.length && <p>Tidak ada catatan sesuai filter. Periksa pencarian dan mapping folder; ini bukan error koneksi.</p>}
     <ul>{results.map(n => <li key={n.path}><Button variant="ghost" className="h-auto max-w-full whitespace-normal break-all text-left" onClick={() => setSelected(n.path)}>{n.path}{n.conflict ? ' · Konflik' : ''}{n.offeringId === null ? ' · Belum dipetakan' : ''}</Button></li>)}</ul>
     {note && <SnapshotReader index={index} note={note} onNavigate={setSelected} />}
+    {note && <SnapshotEditor key={note.canonicalPath} note={note} onSave={bytes => onSave(note.canonicalPath, bytes)} onDirty={onDirty} />}
   </section>
 }

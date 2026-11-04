@@ -54,13 +54,17 @@ python3 scripts/vault_inventory.py '.local/inputs/University.zip' --output .loca
 
 Script hanya menghasilkan manifest path/hash/frontmatter mentah, bukan mengimpor note ke aplikasi.
 
-Import tersedia di tab **Catatan → Import snapshot lokal**. Pilih `.md` UTF-8 atau `.zip`; lihat file diterima dan diagnostic, lalu **Tutup snapshot** untuk melepas laporan, indeks dan pencarian dari memori. Maksimum 32 MiB input, 2.000 entri, 64 MiB ekstraksi, 2 MiB per file. Tidak ada upload atau perubahan sumber. Lampiran dan editor snapshot belum tersedia.
+Import tersedia di tab **Catatan → Import snapshot lokal**. Pilih `.md` UTF-8 atau `.zip`; lihat file diterima dan diagnostic, lalu **Tutup snapshot** untuk melepas laporan, indeks dan pencarian dari memori. Maksimum 32 MiB input, 2.000 entri, 64 MiB ekstraksi, 2 MiB per file. Tidak ada upload atau perubahan sumber. Lampiran belum tersedia.
 
 Sebelum memilih file, atur **Canonical root** dan prefix sumber (satu per baris). Prefix hanya dipetakan pada batas folder; path lain tetap utuh. Panel **Indeks dan metadata** menampilkan SHA-256, source path, properties dan diagnostic YAML. Duplikat identik pada canonical path sama digabung; konten berbeda tetap sebagai versi konflik. Tutup snapshot sebelum mengganti konfigurasi import.
 
 **Jelajahi snapshot lokal** menyediakan filter semester/mata kuliah dan pencarian path/isi. Buka konfigurasi JSON untuk menambah semester dan offering sesuai contoh di panel; `academicPeriod` dan `credits` boleh null. `pathPrefix` harus sesuai folder canonical dan tidak overlap dengan offering lain. Tanpa mapping, note tetap tersedia sebagai belum dipetakan; tidak ada fallback demo. Konfigurasi invalid menampilkan error tanpa menghapus konfigurasi valid. Tutup snapshot menghapus seluruh state explorer. Selector semester global dan editor lama tetap berlabel demo, terpisah dari snapshot.
 
 Pilih path hasil pencarian untuk membuka reader hanya-baca. Reader mendukung GFM/tabel, callout, KaTeX dan Mermaid dalam iframe berorigin opaque dengan CSP tanpa jaringan. HTML mentah dibuang; Dataview/DataviewJS/Tasks ditampilkan sebagai kode, tidak dieksekusi. Wikilink dan Markdown link lokal memakai source path asli/canonical, relative path, alias dan heading; basename ambigu serta sumber di luar snapshot dilaporkan, bukan ditebak. Versi konflik dipilih eksplisit. Gambar/lampiran tidak diambil dari jaringan; tautan HTTP(S) hanya dibuka lewat klik pengguna, tanpa referrer.
+
+Di bawah reader, **Draf snapshot · lokal** mengedit isi Markdown tanpa menulis ulang frontmatter, BOM atau konvensi newline. Tanpa edit, bytes export identik. **Simpan versi ke memori lokal** mempertahankan versi asal dan menambah versi baru; tidak ada persistence atau write R2. Draf belum disimpan memblokir filter/import dan meminta konfirmasi saat navigasi/tutup; refresh memakai peringatan browser. Versi tersimpan yang belum diexport juga memperingatkan saat keluar.
+
+**Export ZIP lokal · versi N** mengunduh satu lapisan versi dengan canonical path asli. Unduh setiap tombol, lalu pilih semua ZIP sekaligus untuk import ulang dan mempertahankan konflik. Jangan mengekstrak lapisan berbeda ke folder sama dengan overwrite. Label diunduh berarti permintaan download telah dikirim ke browser, bukan bukti file tersimpan di disk; pastikan download selesai sebelum menutup sesi.
 
 ## Stack terkunci
 

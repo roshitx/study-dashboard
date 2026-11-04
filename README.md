@@ -16,7 +16,16 @@ bun run dev
 
 Buka `http://localhost:3000`. Setelah menambah route, jalankan dev/build untuk menghasilkan route tree sebelum typecheck. Preview lokal: `bun run preview` setelah build.
 
-**Ini scaffolding, bukan produk terhubung.** Data UI sintetis. Editor mempertahankan draf hanya di memori sampai refresh. API R2, Google, AI, auth dan database belum dihubungkan. `bun run deploy` menolak deployment scaffold; baca `docs/DEPLOYMENT.md` sebelum menambahkan deploy sebenarnya. Tidak ada kredensial yang diperlukan untuk demo lokal.
+**Belum produk terhubung.** Data UI sintetis; snapshot/draf hanya di memori browser. Google owner sign-in dan session D1 telah diimplementasikan, belum diverifikasi dengan OAuth client nyata. API R2, Sheets/Calendar dan AI belum dihubungkan. `bun run deploy` tetap menolak deployment; baca `docs/DEPLOYMENT.md`. Demo/import lokal tidak membutuhkan kredensial.
+
+### Login owner lokal (#15)
+
+1. Buat OAuth client Google jenis Web milik aplikasi; daftarkan callback persis `http://localhost:3000/api/auth/google/callback`. Pilih audience/test user sesuai akun owner.
+2. Salin `.env.example` ke `.dev.vars` secara lokal. Isi `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `AUTH_OWNER_EMAIL`; jangan kirim secret melalui chat/commit. Tidak memakai `VITE_*`. Password vault tidak masuk konfigurasi server.
+3. Jalankan `bunx --bun wrangler d1 migrations apply AUTH_DB --local`, lalu `bun run dev`. Buka origin callback yang sama. Port berubah berarti callback Google dan konfigurasi harus diperbarui, bukan redirect otomatis.
+4. Klik Masuk dengan Google. Scope hanya identitas; Sheets/Calendar tetap terpisah. Session delapan jam, token opaque HttpOnly; Secure wajib HTTPS, pengecualian HTTP hanya literal loopback. Logout mencabut session D1 dan membuang workspace/draf browser termasuk tab lain. Kegagalan jaringan ditampilkan sebagai revocation belum terkonfirmasi; tidak menjanjikan penghapusan fisik memori.
+
+`AUTH_DB` hanya binding lokal tanpa database ID remote; migration auth terpisah di `migrations-auth/`. Academic schema #16 belum diterapkan. Semua endpoint auth no-store; endpoint private mendatang wajib memanggil `requireOwner`. Tanpa konfigurasi, API auth gagal tertutup; ruang snapshot lokal/demo tetap publik dan terpisah. `bun run typecheck` menghasilkan Worker types yang diabaikan Git sebelum tsc.
 
 ## Isi
 

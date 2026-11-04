@@ -28,7 +28,7 @@ Default entrypoint mengikuti `@tanstack/react-start/server-entry`. `wrangler.jso
 
 TanStack Query dapat ditambahkan sebagai cache saat integrasi read mulai dibangun, bukan sebagai salinan utama vault. Cache note harus berada pada sisi browser dan invalidasi saat lock/logout. Jangan memasukkan plaintext ke loader server. Untuk sumber live, status error tidak otomatis berarti daftar kosong.
 
-## Kontrak API rencana (belum tersedia)
+## Kontrak API (session tersedia; endpoint data masih rencana)
 
 | Endpoint | Perilaku |
 |---|---|
@@ -47,6 +47,10 @@ Semua endpoint di tabel harus gagal tertutup jika auth/binding belum siap. Tidak
 ## Google OAuth
 
 Aplikasi Cloudflare memiliki OAuth client sendiri; koneksi Google Drive ChatGPT tidak menyediakan kredensial untuk website ini. Gunakan callback terdaftar, state/PKCE sesuai flow dan validasi owner. Simpan refresh token server-side dengan perlindungan secret terpisah, jangan dalam JS bundle, cookie yang bisa dibaca JS atau query URL. Scope bertahap untuk kebutuhan Sheet/Calendar aktual; jangan meminta Drive penuh hanya untuk mempermudah discovery. Pemilihan login awal ada di DECISIONS.
+
+Auth #15 memakai oauth4webapi untuk state/PKCE/nonce, issuer/audience dan signature RS256. Issuer/endpoints Google tetap, callback konfigurasi exact; email verified harus cocok allowlist owner. Tokens Google tidak disimpan. D1 `auth_transactions` mengikat cookie browser ke state/verifier/nonce selama 10 menit, dikonsumsi atomik DELETE RETURNING; `auth_sessions` menyimpan hash token opaque, subject/email/expiry delapan jam. Cookie HttpOnly/SameSite=Lax, __Host-/Secure pada HTTPS, HTTP hanya literal loopback. Session direvalidasi terhadap allowlist saat setiap request.
+
+GET `/api/auth/google/login` memulai OAuth; GET callback memvalidasi hasil; GET `/api/session` hanya mengembalikan authenticated; POST `/api/auth/logout` memeriksa Origin exact lalu mencabut session/transaction. Semua response handler no-store, errors generik. Route lain belum mengakses provider. Public local/demo bukan area server privat. Logout unmount workspace, membersihkan input/index/draf serta menyiarkan invalidasi tanpa plaintext ke tab lain; kegagalan revocation tetap diberitahukan. Migration auth lokal terpisah dari schema akademik, remote D1 belum dikonfigurasi.
 
 Google Sheets: expectedValue + read-before-write bukan atomic CAS untuk editor eksternal. Serialize writes aplikasi per resource, batasi batch, verifikasi readback dan tampilkan konflik yang terdeteksi. Jangan mengklaim jaminan serialisasi terhadap UI Google Sheets.
 

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import type { SnapshotIndex } from '@/domain/snapshot-index'
 import { parseSnapshotConfig, prepareSnapshotSearch, searchSnapshot, type SnapshotConfig } from '@/domain/snapshot-navigation'
 import { Button } from '@/components/ui/button'
+import { SnapshotReader } from './snapshot-reader'
 
 export function SnapshotExplorer({ index }: { index: SnapshotIndex }) {
   const [source, setSource] = useState('{\n  "semesters": [],\n  "offerings": []\n}')
@@ -15,7 +16,7 @@ export function SnapshotExplorer({ index }: { index: SnapshotIndex }) {
   const courses = config.offerings.filter(o => !semester || o.semesterId === semester)
   const ids = offering && offering !== '__unmapped' ? new Set([offering]) : semester ? new Set(courses.map(o => o.id)) : null
   const results = searchSnapshot(searchable, query, ids, offering === '__unmapped')
-  const note = results.find(n => n.path === selected)
+  const note = index.notes.find(n => n.canonicalPath === selected)
   return <section aria-labelledby="snapshot-explorer-title">
     <h3 id="snapshot-explorer-title">Jelajahi snapshot lokal</h3>
     <p>Sumber: snapshot · memori browser. Bukan data demo atau live. Konfigurasi hanya memetakan folder, tidak mengubah metadata sumber.</p>
@@ -46,6 +47,6 @@ export function SnapshotExplorer({ index }: { index: SnapshotIndex }) {
     <p role="status">{results.length} catatan cocok dari {searchable.length} path snapshot.</p>
     {!results.length && <p>Tidak ada catatan sesuai filter. Periksa pencarian dan mapping folder; ini bukan error koneksi.</p>}
     <ul>{results.map(n => <li key={n.path}><Button variant="ghost" className="h-auto max-w-full whitespace-normal break-all text-left" onClick={() => setSelected(n.path)}>{n.path}{n.conflict ? ' · Konflik' : ''}{n.offeringId === null ? ' · Belum dipetakan' : ''}</Button></li>)}</ul>
-    {note && <p className="path" role="status">Dipilih: {note.path}. {note.conflict ? 'Semua versi konflik tetap berada pada indeks.' : 'Bytes sumber tersimpan pada indeks.'} Reader/editor snapshot tersedia pada milestone berikutnya, bukan editor demo.</p>}
+    {note && <SnapshotReader index={index} note={note} onNavigate={setSelected} />}
   </section>
 }

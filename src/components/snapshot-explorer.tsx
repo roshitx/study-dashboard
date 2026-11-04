@@ -4,6 +4,7 @@ import { parseSnapshotConfig, prepareSnapshotSearch, searchSnapshot, type Snapsh
 import { Button } from '@/components/ui/button'
 import { SnapshotReader } from './snapshot-reader'
 import { SnapshotEditor } from './snapshot-editor'
+import { SnapshotQueries } from './snapshot-queries'
 
 export function SnapshotExplorer({ index, onSave, onDirty, dirty }: { index: SnapshotIndex; onSave: (path: string, bytes: Uint8Array) => Promise<number>; onDirty: (dirty: boolean) => void; dirty: boolean }) {
   const [source, setSource] = useState('{\n  "semesters": [],\n  "offerings": []\n}')
@@ -21,6 +22,7 @@ export function SnapshotExplorer({ index, onSave, onDirty, dirty }: { index: Sna
   return <section aria-labelledby="snapshot-explorer-title">
     <h3 id="snapshot-explorer-title">Jelajahi snapshot lokal</h3>
     <p>Sumber: snapshot · memori browser. Bukan data demo atau live. Konfigurasi hanya memetakan folder, tidak mengubah metadata sumber.</p>
+    <SnapshotQueries index={index} onNavigate={setSelected} />
     <details><summary>Konfigurasi semester dan offering (JSON)</summary>
       <p>Semester: id, number, academicPeriod (string/null), active. Offering: id, semesterId, courseCode, name, credits (angka/null), pathPrefix sesuai path indeks. Tidak ada semester atau SKS otomatis.</p>
       <pre className="whitespace-pre-wrap break-all">{'{"semesters":[{"id":"s3","number":3,"academicPeriod":null,"active":true}],"offerings":[{"id":"s3-course","semesterId":"s3","courseCode":"KODE","name":"Nama mata kuliah","credits":null,"pathPrefix":"University/Semester 3/Mata Kuliah"}]}'}</pre>

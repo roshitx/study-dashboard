@@ -3,7 +3,7 @@ import type { IndexedNote } from '@/domain/snapshot-index'
 import { draftBody, draftBytes } from '@/domain/snapshot-draft'
 import { Button } from './ui/button'
 
-export function SnapshotEditor({ note, onSave, onDirty }: { note: IndexedNote; onSave: (bytes: Uint8Array) => Promise<void>; onDirty: (dirty: boolean) => void }) {
+export function SnapshotEditor({ note, onSave, onDirty }: { note: IndexedNote; onSave: (bytes: Uint8Array) => Promise<number>; onDirty: (dirty: boolean) => void }) {
   const [version, setVersion] = useState(0)
   const source = note.versions[version] ?? note.versions[0]!
   const [body, setBody] = useState(() => draftBody(source))
@@ -23,7 +23,7 @@ export function SnapshotEditor({ note, onSave, onDirty }: { note: IndexedNote; o
     <p role="status">{dirty ? 'Draf belum disimpan.' : 'Tidak ada perubahan draf.'} {message}</p>
     <Button disabled={busy || !dirty} onClick={async () => {
       setBusy(true)
-      try { await onSave(draftBytes(source, body)); setBody(draftBody(source)); setMessage('Versi baru disimpan ke memori lokal. Export untuk menyimpan ke disk.') }
+      try { const savedVersion = await onSave(draftBytes(source, body)); setVersion(savedVersion); setMessage('Versi baru disimpan ke memori lokal. Export untuk menyimpan ke disk.') }
       catch (error) { setMessage(error instanceof Error ? error.message : 'Simpan lokal gagal; draf dipertahankan.') }
       finally { setBusy(false) }
     }}>Simpan versi ke memori lokal</Button>

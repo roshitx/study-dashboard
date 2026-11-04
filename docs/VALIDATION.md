@@ -72,6 +72,7 @@ Build mengeluarkan peringatan CSS sourcemap dari toolchain; hasil build berhasil
 - Chromium fallback disetujui setelah Obscura kembali tanpa hidrasi. Smoke: edit/simpan menghasilkan dua versi; batal navigasi tab/tutup mempertahankan editor; beforeunload cancelable dibatalkan selama draf atau versi belum diexport; filter/import dinonaktifkan saat dirty. Dua tombol export mengirim download dan membersihkan flag setelah semua lapisan. Native dialog refresh OS tidak diotomasi; handler beforeunload diuji melalui event browser.
 - Mobile 390×844 dengan dua versi: editor terpasang dan tanpa overflow setelah select hash dibatasi lebar. Screenshot lokal sintetis; tidak ada source pengguna yang diunggah. Bukti download UI bukan bukti browser selesai menulis disk; payload ZIP diuji lewat round-trip domain/importer.
 - Simpan hanya memori sesi, tidak ada write R2 atau persistence produksi. Export satu ZIP per lapisan menghindari nama entri duplikat; semua lapisan harus dipilih bersama saat reimport. Jev unavailable karena JEV_API_KEY belum dikonfigurasi; warning CSS sourcemap tetap.
+- Review save-state: setelah simpan editor memilih indeks versi hasil save, bukan mengembalikan body versi dasar. Chromium membuktikan dua save berurutan mempertahankan body masing-masing, selector 1 lalu 2, total tiga versi, dirty false; tests/build/typecheck tetap lulus.
 
 ## Belum diverifikasi / belum diimplementasikan
 

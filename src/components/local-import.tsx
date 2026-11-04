@@ -75,12 +75,15 @@ export function LocalImport() {
           {unexported && <p role="status">Versi tersimpan hanya di memori; belum semua lapisan diexport.</p>}
           <SnapshotExplorer index={index} dirty={dirty} onDirty={setDirty} onSave={async (path, bytes) => {
             const added = await indexSnapshot([{ path, bytes }], root, [])
+            const current = index.notes.find(note => note.canonicalPath === path)!
+            const existing = current.versions.findIndex(version => version.hash === added.notes[0]!.versions[0]!.hash)
             setIndex(previous => {
               if (!previous) throw new Error('Snapshot sudah ditutup.')
               const notes = previous.notes.map(note => note.canonicalPath === path ? { ...note, versions: [...note.versions, ...added.notes[0]!.versions.filter(v => !note.versions.some(old => old.hash === v.hash))] } : note)
               return { ...previous, notes, conflictCount: notes.filter(n => n.versions.length > 1).length }
             })
             setUnexported(true); setExportedLayers(new Set())
+            return existing < 0 ? current.versions.length : existing
           }} />
           <details><summary>Indeks dan metadata</summary>{index.notes.map(note => <article key={note.canonicalPath}>
             <h3 className="path">{note.canonicalPath}{note.versions.length > 1 ? ' · Konflik: semua versi dipertahankan' : ''}</h3>

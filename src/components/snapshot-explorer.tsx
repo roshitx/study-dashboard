@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { SnapshotReader } from './snapshot-reader'
 import { SnapshotEditor } from './snapshot-editor'
 
-export function SnapshotExplorer({ index, onSave, onDirty, dirty }: { index: SnapshotIndex; onSave: (path: string, bytes: Uint8Array) => Promise<void>; onDirty: (dirty: boolean) => void; dirty: boolean }) {
+export function SnapshotExplorer({ index, onSave, onDirty, dirty }: { index: SnapshotIndex; onSave: (path: string, bytes: Uint8Array) => Promise<number>; onDirty: (dirty: boolean) => void; dirty: boolean }) {
   const [source, setSource] = useState('{\n  "semesters": [],\n  "offerings": []\n}')
   const [config, setConfig] = useState<SnapshotConfig>({ semesters: [], offerings: [] })
   const [error, setError] = useState('')

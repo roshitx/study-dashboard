@@ -59,10 +59,17 @@ Domain tests mencakup kode kelas terpisah, null grade vs zero, submitted vs read
 
 Build mengeluarkan peringatan CSS sourcemap dari toolchain; hasil build berhasil. Tidak ada klaim debugging CSS sourcemap sudah sempurna. Proxy warning berasal dari environment build.
 
+## Reader snapshot (#12)
+
+- Frozen install, 17 tests/60 assertions, client/Worker build dan typecheck lulus. Resolver diuji untuk relative path, source prefix, alias/heading, ambiguity, missing, skema berbahaya dan traversal. Render regression membuktikan tabel/math tampil, HTML aktif dibuang, query plugin tetap teks.
+- Smoke Chromium yang disetujui memakai Markdown sintetis: tabel dan KaTeX tampil; screenshot menunjukkan Mermaid Mulai/Selesai; callout WARNING tampil; tautan missing/unsafe memberi alert; tautan heading scroll ke tujuan. `window.__unsafe` tetap false, tidak ada elemen gambar remote. Mobile 390×844 tanpa overflow; browser page errors kosong.
+- Obscura tetap menampilkan shell tanpa hidrasi/label; tidak diklaim kompatibel. Mermaid memakai sandbox allow-scripts tanpa allow-same-origin dan CSP connect-src none; source tidak diunggah. Frame cross-origin tidak dapat diinspeksi lewat helper frame agent-browser, bukti Mermaid adalah screenshot aktual.
+- Bukti ini bukan acceptance source pengguna, audit semua grammar Mermaid, live provider atau persistence produksi. Warning CSS sourcemap toolchain masih ada.
+
 ## Belum diverifikasi / belum diimplementasikan
 
 - Audit accessibility end-to-end dan kompatibilitas Obscura belum tuntas; smoke test browser setup terbaru tercatat di atas.
-- Actual import konten, rich Markdown renderer, query Dataview, Tasks, Canvas, PDF/image viewer serta durable editing belum ada; M1/P2.
+- Query Dataview/Tasks, Canvas, PDF/image viewer serta durable editing belum ada. Reader snapshot aman dan import sudah tersedia; acceptance vault nyata tetap #14.
 - Autentikasi, otorisasi runtime, R2/D1 bindings, RClone Crypt decryption/interoperability dan konflikt recovery belum ada.
 - Google Sheets/Calendar OAuth, read/write dan provider readback belum dilakukan.
 - AI model, generasi soal, scoring dan planner belum ada.

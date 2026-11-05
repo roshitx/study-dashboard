@@ -28,4 +28,8 @@ Personal study assistant UT lintas semester; TanStack; dari awal tanpa repo exis
 4. **Sebelum M6 AI:** provider/model yang ingin dipakai, batas biaya bulanan, serta apakah materi terpilih boleh dikirim untuk generasi/review. Default tidak ada pemanggilan AI.
 5. **Sebelum offline/P2:** apakah perlu akses saat offline dan apakah penyimpanan lokal terenkripsi persisten dapat digunakan? Default online-first dan memory-only.
 
+## Metadata privat #16
+
+Konfigurasi semester/course/offering disimpan sebagai satu dokumen JSON tervalidasi per subject owner, dengan compare-and-swap revision atomik D1. Ini menghindari partial update lintas tabel; tabel domain awal tetap belum menjadi sumber runtime. Kode registrasi dan BMP terpisah, unknown tetap null. API hanya menerima konfigurasi akademik dengan field allowlist, bukan integration config generik. Provider resource mapping ditunda ke milestone adapter masing-masing. Tidak ada upload notes/index/password, tidak ada migration atau deployment remote. Gate Google nyata #15 terpisah dari pekerjaan lokal #16.
+
 Jangan meminta semua jawaban ini sebelum memulai M1. Catat asumsi dan lanjutkan pekerjaan independen yang sudah jelas. Tidak ada secret diperlukan untuk membuka starter atau menjalankan tests/build.

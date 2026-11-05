@@ -16,6 +16,11 @@
       "binding": "AUTH_DB",
       "database_name": "study-auth-local",
       "migrations_dir": "migrations-auth"
+    },
+    {
+      "binding": "METADATA_DB",
+      "database_name": "study-metadata-local",
+      "migrations_dir": "migrations"
     }
   ]
 }

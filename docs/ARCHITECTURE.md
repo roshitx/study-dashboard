@@ -12,7 +12,7 @@ Default entrypoint mengikuti `@tanstack/react-start/server-entry`. `wrangler.jso
 - `integrations`: ports. Implementasi nanti dipisah client-only vault crypto, server-only R2/Google dan persistence.
 - `data/demo`: contoh sintetis. Tidak menjadi fallback diam-diam untuk live provider.
 - `routes`: shell produk; saat ini satu route dengan tab. M1 memecah route bila perlu tanpa mengubah model domain.
-- `migrations`: D1 metadata, belum dijalankan. Review sebelum diterapkan; schema awal belum mencakup semua tabel modul/planner/riwayat.
+- `migrations`: D1 metadata; diterapkan lokal untuk #16, belum remote. Runtime konfigurasi akademik memakai `academic_metadata` owner-scoped dengan revisi atomik; tabel domain awal belum dipakai adapter aktivitas/planner.
 - `scripts`: utilitas agent lokal; bukan handler server produksi.
 
 ## Data ownership dan cache
@@ -28,11 +28,12 @@ Default entrypoint mengikuti `@tanstack/react-start/server-entry`. `wrangler.jso
 
 TanStack Query dapat ditambahkan sebagai cache saat integrasi read mulai dibangun, bukan sebagai salinan utama vault. Cache note harus berada pada sisi browser dan invalidasi saat lock/logout. Jangan memasukkan plaintext ke loader server. Untuk sumber live, status error tidak otomatis berarti daftar kosong.
 
-## Kontrak API (session tersedia; endpoint data masih rencana)
+## Kontrak API (session dan metadata lokal tersedia; provider masih rencana)
 
 | Endpoint | Perilaku |
 |---|---|
 | GET `/api/session` | Identitas owner autentik, tidak mengembalikan tokens |
+| GET/PUT `/api/metadata` | Konfigurasi semester/course/offering owner dari session, JSON terbatas 128 KiB, expectedRevision CAS, Origin exact pada PUT; field/provider resource arbitrer ditolak |
 | GET `/api/vault/objects?cursor=...` | List paginated encrypted keys di prefix yang diotorisasi |
 | POST `/api/vault/read` | Encrypted bytes dan revisi, resource ID dipetakan server |
 | POST `/api/vault/write` | Ciphertext + expectedRevision + idempotencyKey; konflik jika stale |
@@ -51,6 +52,8 @@ Aplikasi Cloudflare memiliki OAuth client sendiri; koneksi Google Drive ChatGPT 
 Auth #15 memakai oauth4webapi untuk state/PKCE/nonce, issuer/audience dan signature RS256. Issuer/endpoints Google tetap, callback konfigurasi exact; email verified harus cocok allowlist owner. Tokens Google tidak disimpan. D1 `auth_transactions` mengikat cookie browser ke state/verifier/nonce selama 10 menit, dikonsumsi atomik DELETE RETURNING; `auth_sessions` menyimpan hash token opaque, subject/email/expiry delapan jam. Cookie HttpOnly/SameSite=Lax, __Host-/Secure pada HTTPS, HTTP hanya literal loopback. Session direvalidasi terhadap allowlist saat setiap request.
 
 GET `/api/auth/google/login` memulai OAuth; GET callback memvalidasi hasil; GET `/api/session` hanya mengembalikan authenticated; POST `/api/auth/logout` memeriksa Origin exact lalu mencabut session/transaction. Semua response handler no-store, errors generik. Route lain belum mengakses provider. Public local/demo bukan area server privat. Logout unmount workspace, membersihkan input/index/draf serta menyiarkan invalidasi tanpa plaintext ke tab lain; kegagalan revocation tetap diberitahukan. Migration auth lokal terpisah dari schema akademik, remote D1 belum dikonfigurasi.
+
+Metadata #16 memakai binding `METADATA_DB` lokal terpisah dari `AUTH_DB`. Konfigurasi akademik pribadi hanya disimpan sesudah PUT eksplisit, bukan dari importer otomatis. Satu statement INSERT/ON CONFLICT/RETURNING menjaga revisi dan payload atomik; konflik 409 tidak menghapus draf client. Semua SELECT/mutasi dibatasi subject session, tidak ada owner ID client. Unknown fields, relasi invalid, semester aktif ganda dan ukuran berlebih ditolak; respons/error no-store tanpa payload/secret di log. Notes, indeks, password dan path plaintext tidak termasuk kontrak D1.
 
 Google Sheets: expectedValue + read-before-write bukan atomic CAS untuk editor eksternal. Serialize writes aplikasi per resource, batasi batch, verifikasi readback dan tampilkan konflik yang terdeteksi. Jangan mengklaim jaminan serialisasi terhadap UI Google Sheets.
 

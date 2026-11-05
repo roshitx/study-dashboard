@@ -4,7 +4,7 @@ Paket ini diserahkan sebagai source scaffold lokal. Belum ada project Cloudflare
 
 ## Mengapa deploy belum aktif
 
-UI saat ini hanya demo sintetis tanpa auth. `scripts/deploy.mjs` gagal eksplisit agar command umum tidak keliru dianggap sudah men-deploy aplikasi private. Ini batas teknis scaffold; bukan permintaan persetujuan ulang untuk pengembangan lokal.
+UI demo/snapshot lokal tetap publik, tanpa data server privat. Auth Google/session dan API metadata owner-scoped tersedia lokal; acceptance provider Google nyata belum lulus. `scripts/deploy.mjs` tetap gagal eksplisit agar command umum tidak keliru dianggap sudah men-deploy aplikasi private. Ini batas teknis rilis; bukan permintaan persetujuan ulang untuk pengembangan lokal.
 
 ## Langkah agent saat milestone integrasi siap
 
@@ -20,3 +20,11 @@ UI saat ini hanya demo sintetis tanpa auth. `scripts/deploy.mjs` gagal eksplisit
 
 Tidak ada remote binding/config nyata dalam paket; template binding mengikuti dokumentasi resmi terbaru, bukan ID tebakan:
 https://developers.cloudflare.com/workers/framework-guides/web-apps/tanstack-start/
+
+## Staging lokal #16
+
+`AUTH_DB` dan `METADATA_DB` tidak memiliki ID remote; migration hanya `--local`. Gunakan origin loopback, tanpa tunnel atau preview publik. `workers_dev:false`, `preview_urls:false`, observability nonaktif tetap dipertahankan. Route metadata memverifikasi owner sebelum mengakses D1, membatasi resource ke satu konfigurasi owner; tidak menyediakan upload note atau proxy provider generik.
+
+Untuk smoke build: jalankan `node node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --persist-to .wrangler/state --port 8787` setelah migration lokal. Node diperlukan untuk runtime Wrangler forwarding pada versi ini: Bun fetch mengabaikan dispatcher undici dan menghasilkan 503. CLI migration tetap memakai `bunx --bun`. Konfigurasi OAuth callback harus cocok origin yang diuji; konfigurasi sintetis hanya membuktikan batas session/API, bukan login Google.
+
+Staging remote belum diprovision: domain private/akun/bindings nyata serta acceptance Google masih diperlukan. Jangan mengaktifkan URL publik atau deployment untuk menggantikan gate tersebut.

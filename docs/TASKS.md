@@ -65,6 +65,8 @@ Depends: M1. Pilih provider login dengan owner allowlist; default Google sign-in
 
 Acceptance: unauthorized/foreign owner ditolak di server; staging tidak mengekspos source notes; logout membersihkan data browser. Konfigurasi owner/redirect perlu pengguna sebelum live auth.
 
+Status #16 lokal: GET/PUT metadata owner-scoped tersedia dengan schema akademik strict, limit 128 KiB, Origin, no-store dan expectedRevision atomik. Migration D1 lokal dan Worker round-trip/denial smoke lulus; bukti di VALIDATION. Auth provider Google nyata #15 serta provisioning/domain private staging remote tetap gate terpisah, tidak diblokirkan ke pengembangan lokal. Tidak ada notes/index/password disimpan D1 atau deployment dilakukan.
+
 ## M3 — vault terenkripsi read/write
 
 Depends: M2. Dapatkan versi plugin dan konfigurasi non-secret prefix/format, fixture encrypted yang disiapkan di vault uji. Adapter kripto browser harus interoperabel; lock/unlock, content and filename decoding, transport read/list paginated, revision conflicts dan recovery.
@@ -88,6 +90,7 @@ Acceptance: tidak duplikat pada refresh/retry; event pribadi tak terkait tidak b
 Depends: reader M1; AI live setelah keputusan provider. Extract soal dan kunci dengan preview; soal tersimpan terpisah dari attempts dan feedback. Scoring objektif hanya jika kunci valid. Esai memakai rubrik dan label estimasi. AI menerima materi pilihan dengan sumber, tidak full vault secara default.
 
 Acceptance: key hidden dahulu; checkbox opsi adalah input jawaban; warning kunci tidak cocok mencegah nilai pasti; percobaan kedua tidak menimpa pertama; feedback merujuk sumber nyata. Tanpa AI, latihan manual tetap berfungsi.
+
 
 ## M7 — release
 

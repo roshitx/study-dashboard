@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiMetadataRouteImport } from './routes/api.metadata'
 import { Route as ApiSessionRouteImport } from './routes/api.session'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api.auth.logout'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api.auth.google.callback'
@@ -18,6 +19,11 @@ import { Route as ApiAuthGoogleLoginRouteImport } from './routes/api.auth.google
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMetadataRoute = ApiMetadataRouteImport.update({
+  id: '/api/metadata',
+  path: '/api/metadata',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSessionRoute = ApiSessionRouteImport.update({
@@ -43,6 +49,7 @@ const ApiAuthGoogleLoginRoute = ApiAuthGoogleLoginRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -67,6 +76,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
     | '/api/auth/google/callback'
@@ -74,6 +84,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
     | '/api/auth/google/callback'
@@ -81,6 +92,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
     | '/api/auth/google/callback'
@@ -89,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiMetadataRoute: typeof ApiMetadataRoute
   ApiSessionRoute: typeof ApiSessionRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
   ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
@@ -102,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/metadata': {
+      id: '/api/metadata'
+      path: '/api/metadata'
+      fullPath: '/api/metadata'
+      preLoaderRoute: typeof ApiMetadataRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/session': {
@@ -137,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiMetadataRoute: ApiMetadataRoute,
   ApiSessionRoute: ApiSessionRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
   ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,

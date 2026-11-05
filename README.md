@@ -25,7 +25,15 @@ Buka `http://localhost:3000`. Setelah menambah route, jalankan dev/build untuk m
 3. Jalankan `bunx --bun wrangler d1 migrations apply AUTH_DB --local`, lalu `bun run dev`. Buka origin callback yang sama. Port berubah berarti callback Google dan konfigurasi harus diperbarui, bukan redirect otomatis.
 4. Klik Masuk dengan Google. Scope hanya identitas; Sheets/Calendar tetap terpisah. Session delapan jam, token opaque HttpOnly; Secure wajib HTTPS, pengecualian HTTP hanya literal loopback. Logout mencabut session D1 dan membuang workspace/draf browser termasuk tab lain. Kegagalan jaringan ditampilkan sebagai revocation belum terkonfirmasi; tidak menjanjikan penghapusan fisik memori.
 
-`AUTH_DB` hanya binding lokal tanpa database ID remote; migration auth terpisah di `migrations-auth/`. Academic schema #16 belum diterapkan. Semua endpoint auth no-store; endpoint private mendatang wajib memanggil `requireOwner`. Tanpa konfigurasi, API auth gagal tertutup; ruang snapshot lokal/demo tetap publik dan terpisah. `bun run typecheck` menghasilkan Worker types yang diabaikan Git sebelum tsc.
+`AUTH_DB` dan `METADATA_DB` hanya binding lokal tanpa database ID remote; migration auth terpisah di `migrations-auth/`. Semua endpoint private memanggil `requireOwner`. Tanpa konfigurasi, API gagal tertutup; ruang snapshot lokal/demo tetap publik dan terpisah. `bun run typecheck` menghasilkan Worker types yang diabaikan Git sebelum tsc.
+
+### Metadata privat lokal (#16)
+
+Jalankan `bunx --bun wrangler d1 migrations apply METADATA_DB --local`. GET `/api/metadata` mengembalikan `{ revision, metadata }` untuk owner dari session; belum tersimpan berarti revision 0. PUT ke path sama menerima tepat `{ expectedRevision, metadata }`, JSON maksimum 128 KiB, Origin sama. Revision stale menghasilkan 409; pertahankan perubahan lokal, baca ulang lalu rekonsiliasi sebelum retry. Tidak ada overwrite otomatis.
+
+`metadata` memiliki tepat tiga array: `semesters` (maksimum 40: `id`, `number`, `academicPeriod`, `active`), `courses` (300: `id`, `courseCode`, `sourceCourseCode`, `name`), `offerings` (600: `id`, `semesterId`, `courseId`, `classId`, `credits`). Field nullable wajib ditulis null; kode registrasi/BMP berbeda, SKS unknown tetap null. ID unik per jenis, referensi harus terdaftar, satu semester aktif; field asing ditolak. ID menggunakan huruf ASCII/angka/underscore/hyphen, maksimum 64 karakter. Nomor semester 1–100, SKS 1–30/null. Batas string periode/class 64, kode 32, nama 160.
+
+Nama mata kuliah dan periode merupakan metadata pribadi yang disimpan D1 hanya setelah PUT eksplisit; importer tidak mengunggah apa pun. Endpoint tidak menerima owner ID, notes, indeks, path vault, password, object key, cell, kalender atau URL provider. Semua respons no-store. Konfigurasi akademik tersimpan atomik sebagai satu revisi owner-scoped; tabel domain awal belum dipakai adapter fitur berikutnya. Belum ada UI editor metadata server atau provisioning/deployment staging remote. Preview lokal tidak mempublikasikan sumber; gate remote tetap di `docs/DEPLOYMENT.md`.
 
 ## Isi
 

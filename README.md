@@ -35,6 +35,14 @@ Jalankan `bunx --bun wrangler d1 migrations apply METADATA_DB --local`. GET `/ap
 
 Nama mata kuliah dan periode merupakan metadata pribadi yang disimpan D1 hanya setelah PUT eksplisit; importer tidak mengunggah apa pun. Endpoint tidak menerima owner ID, notes, indeks, path vault, password, object key, cell, kalender atau URL provider. Semua respons no-store. Konfigurasi akademik tersimpan atomik sebagai satu revisi owner-scoped; tabel domain awal belum dipakai adapter fitur berikutnya. Belum ada UI editor metadata server atau provisioning/deployment staging remote. Preview lokal tidak mempublikasikan sumber; gate remote tetap di `docs/DEPLOYMENT.md`.
 
+### Latihan manual dari snapshot (#24)
+
+Import Markdown/ZIP, pilih catatan, lalu klik **Latihan dari catatan ini**. Preview memilih versi sumber dan menampilkan soal tanpa kunci; mulai latihan menyembunyikan reader/editor sumber. Pilihan ganda memakai radio, bukan task. Isian dicocokkan persis setelah trim dan lowercase; esai hanya review rubrik manual dengan label estimasi, bukan skor otomatis.
+
+Format didukung: satu baris per soal `1. Pertanyaan`, opsi `A. Pilihan` atau `- [ ] A. Pilihan`, field `Kunci: A` / `Jawaban: teks`, `Rubrik: kriteria`, `Peringatan: alasan`. Heading menjadi provenance. Frontmatter/fenced code tidak diekstrak. Baris lanjutan/format lain belum didukung, cocokkan preview dengan sumber. Kunci duplikat/invalid/kosong, warning sumber, atau kode registrasi/BMP berbeda memblokir penilaian pasti. Tidak menyimpulkan ekuivalensi kode atau modul/sesi.
+
+Kunci baru terlihat sesudah submit. Attempt baru tidak menimpa attempt sebelumnya; histori tersedia selama panel latihan terbuka. Kembali ke sumber, ganti note, menutup snapshot, reload atau logout membuang state latihan. Tidak ada persistence, upload, AI atau perubahan bytes sumber.
+
 ## Isi
 
 | File | Kegunaan |

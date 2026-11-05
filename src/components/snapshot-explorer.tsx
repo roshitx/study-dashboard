@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 
+import { SnapshotPractice } from './snapshot-practice'
 export function SnapshotExplorer({ index, onSave, onDirty, dirty }: { index: SnapshotIndex; onSave: (path: string, bytes: Uint8Array) => Promise<number>; onDirty: (dirty: boolean) => void; dirty: boolean }) {
   const [source, setSource] = useState('{\n  "semesters": [],\n  "offerings": []\n}')
   const [config, setConfig] = useState<SnapshotConfig>({ semesters: [], offerings: [] })
@@ -21,6 +22,7 @@ export function SnapshotExplorer({ index, onSave, onDirty, dirty }: { index: Sna
   const [offering, setOffering] = useState('')
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState('')
+  const [practicePath, setPracticePath] = useState('')
   const searchable = useMemo(() => prepareSnapshotSearch(index, config), [index, config])
   const courses = config.offerings.filter(o => !semester || o.semesterId === semester)
   const ids = offering && offering !== '__unmapped' ? new Set([offering]) : semester ? new Set(courses.map(o => o.id)) : null
@@ -66,7 +68,7 @@ export function SnapshotExplorer({ index, onSave, onDirty, dirty }: { index: Sna
     <p role="status">{results.length} catatan cocok dari {searchable.length} path snapshot.</p>
     {!results.length && <Empty><EmptyHeader><EmptyMedia variant="icon"><FileSearch /></EmptyMedia><EmptyTitle>Tidak ada catatan sesuai filter</EmptyTitle><EmptyDescription>Periksa pencarian dan mapping folder; ini bukan error koneksi.</EmptyDescription></EmptyHeader></Empty>}
     <ul>{results.map(n => <li key={n.path}><Button variant="ghost" className="h-auto max-w-full whitespace-normal break-all text-left" onClick={() => setSelected(n.path)}>{n.path}{n.conflict ? ' · Konflik' : ''}{n.offeringId === null ? ' · Belum dipetakan' : ''}</Button></li>)}</ul>
-    {note && <SnapshotReader index={index} note={note} onNavigate={setSelected} />}
-    {note && <SnapshotEditor key={note.canonicalPath} note={note} onSave={bytes => onSave(note.canonicalPath, bytes)} onDirty={onDirty} />}
+    {note && practicePath !== note.canonicalPath && <Button className="min-h-11 self-start" variant="outline" disabled={dirty} onClick={() => setPracticePath(note.canonicalPath)}>Latihan dari catatan ini</Button>}
+    {note && practicePath === note.canonicalPath ? <SnapshotPractice key={note.canonicalPath} note={note} onClose={() => setPracticePath('')} /> : note && <><SnapshotReader index={index} note={note} onNavigate={setSelected} /><SnapshotEditor key={note.canonicalPath} note={note} onSave={bytes => onSave(note.canonicalPath, bytes)} onDirty={onDirty} /></>}
   </section>
 }

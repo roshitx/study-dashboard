@@ -91,6 +91,7 @@ Depends: reader M1; AI live setelah keputusan provider. Extract soal dan kunci d
 
 Acceptance: key hidden dahulu; checkbox opsi adalah input jawaban; warning kunci tidak cocok mencegah nilai pasti; percobaan kedua tidak menimpa pertama; feedback merujuk sumber nyata. Tanpa AI, latihan manual tetap berfungsi.
 
+Status #24 lokal: latihan dari note snapshot memiliki preview versi, pilihan ganda/isian/esai, kunci terpisah sampai review dan histori attempts selama panel terbuka. Parser konservatif satu baris, format didokumentasikan README; warning sumber atau kode berbeda memblokir penilaian pasti. Esai memakai rubrik review manual berlabel estimasi. UI existing dipertahankan; tanpa AI, upload atau persistence. Bukti tests/build/browser di VALIDATION. Belum commit/push atau menutup issue GitHub.
 
 ## M7 — release
 

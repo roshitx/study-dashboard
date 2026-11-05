@@ -40,3 +40,10 @@ Jangan meminta semua jawaban ini sebelum memulai M1. Catat asumsi dan lanjutkan 
 - Registry resmi `@shadcn`, Base UI Nova; sidebar responsif, Card, Field, Select, Alert, Table dan Empty menggantikan markup custom. Sidebar memisahkan empat tugas yang sudah ada; Sheet mobile memberi navigasi keyboard tanpa membuat tujuan baru.
 - Hijau `#284c3e`, krem `#f5f5ef`, sage dan aksen `#dce6a7` dipindahkan ke token semantic agar seluruh komponen konsisten. Geist lokal yang sudah terpasang menjadi satu font untuk keterbacaan kontrol; font Google eksternal dan CSS global legacy dihapus agar tidak mengganggu komponen.
 - Card membatasi konten/aksi yang terkait, bukan menambah panel statistik. Lucide BookOpen/FileText/CalendarDays/Link2/Save/Download dipilih untuk tugas buku/catatan/jadwal/koneksi/simpan/export, sesuai permintaan pengguna. Tidak ada animasi dekoratif; hanya transisi komponen bawaan.
+
+## Latihan manual #24
+
+- Dipilih karena dependency native #12 sudah CLOSED/COMPLETED; #15 Google nyata dan #16 staging remote tetap gate terpisah. Tidak melewati gate vault/Sheets/Calendar.
+- Latihan hidup di panel note snapshot, tanpa menu baru, memakai Card/Field/Button/Select existing. Palet chalk/sage, navbar, sidebar dan theme reveal tidak diubah.
+- Ekstraksi hanya pola eksplisit satu baris dan harus melalui preview; kunci/rubrik terpisah dari soal. Warning eksplisit diperlakukan konservatif lintas note, perbedaan kode tidak dinormalisasi. Short-answer hanya exact trim/lowercase, esai review manual estimasi, bukan penilai AI.
+- Attempts state browser panel saja; attempt baru append, tidak overwrite. Close panel/navigasi note/snapshot/logout membuang state. Tidak ada persistence atau pengiriman materi baru.

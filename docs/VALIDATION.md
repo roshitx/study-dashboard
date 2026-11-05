@@ -141,3 +141,11 @@ Build mengeluarkan peringatan CSS sourcemap dari toolchain; hasil build berhasil
 - Remote deployment dan migration produksi tidak dilakukan.
 
 Starter hanya memiliki shell UI sintetis dan editor memori. Seluruh source snapshot pengguna dikecualikan dari ZIP handoff. Manifest inventory hasil analisis berada di `.local/` dan tidak dibundel.
+
+## Latihan manual #24, 5 November 2026
+
+- GitHub: #24 OPEN dengan dependency native #12 yang CLOSED/COMPLETED. #15/#16 live belum diklaim selesai. Tidak ada publish, commit atau perubahan issue remote.
+- Frozen install lulus; `bun test`: 29 pass, 0 fail, 158 assertions. `bun run build` dan `bun run typecheck` lulus; warning CSS sourcemap existing tetap. Enam test latihan membuktikan pemisahan kunci, provenance, warning/mismatch, invalid/missing key, rubrik esai dan attempts terpisah.
+- Chromium fixture sintetis `/tmp/practice-synthetic.md`: import, pilih note, preview versi, 3 soal; kunci mentah dan field kunci tidak terlihat pada preview/answer. Pilihan A + isian biru sesuai kunci, esai hanya rubrik manual estimasi; review menampilkan path/hash/heading/modul asli. Attempt kedua B/merah tidak menimpa attempt pertama A/biru; tombol histori membuka pertama.
+- Build final setelah perbaikan landmark diuji ulang melalui preview yang direstart. Mobile 390×844 light/dark: scrollWidth 390, latihan/review dan input berfungsi. Axe workspace answer light/dark dan review dark: 0 violation, 0 incomplete, 20 passes. Page errors kosong. Logout menghapus panel latihan dan path sumber dari DOM. Screenshot sintetis `/tmp/practice-mobile-light.png`; Obscura tetap gagal hidrasi, Chromium dipakai seperti pengujian sebelumnya.
+- Batas: format multiline/tabel kunci belum didukung, diagnostik preview menjelaskan batas. Histori tidak durable dan hilang saat panel ditutup. Tidak diuji dengan sumber privat nyata, AI/provider/live staging tidak dipakai. UI existing dipertahankan, tidak ada navigasi baru atau perubahan tema.

@@ -96,6 +96,41 @@ Build mengeluarkan peringatan CSS sourcemap dari toolchain; hasil build berhasil
 - Runtime Wrangler via Bun menghasilkan 503 karena dispatcher undici diabaikan; Node menjalankan build Worker dengan benar. `--persist-to .wrangler/state` eksplisit memastikan preview memakai migration lokal yang sama. Jev dicoba tetapi unavailable (`JEV_API_KEY` tidak tersedia); warning CSS sourcemap tetap. Tidak ada perubahan UI; browser visual tidak diuji ulang untuk API-only deliverable.
 - Metadata menyimpan hanya konfigurasi akademik tervalidasi per owner, bukan notes/index/password/path. Belum ada UI editor konfigurasi server, adapter provider, staging remote atau deployment. Private remote staging memerlukan akun/domain/bindings nyata dan live Google acceptance #15; tidak diklaim lulus. Sumber privat tidak digunakan untuk smoke ini.
 
+## UI/UX shadcn, 5 November 2026
+
+- CLI `bunx --bun shadcn@latest info/search/docs/add` dipakai dengan registry `@shadcn`, Base UI Nova. 16 berkas komponen/hook resmi ditambahkan; Button existing tidak ditimpa. Palet hijau/krem/sage dipertahankan lewat token semantic, bukan preset neutral. CSS global legacy yang bertabrakan dengan kontrol dihapus; font Geist lokal tidak memerlukan Google Fonts.
+- Frozen install berhasil; 23 tests/129 assertions, build dan typecheck lulus. Assertion literal `<table>` insidental dihapus karena shadcn Table menambahkan atribut; assertion sanitasi HTML/JS serta plugin inert tetap lulus. Warning CSS sourcemap existing tetap muncul.
+- Obscura dicoba dahulu: screenshot berhasil, klik gagal `DOM.getBoxModel` float/i64; hidrasi tidak teramati. Doctor 0 fail. Pengguna mengizinkan Chromium sementara. Chromium build Worker: desktop 1440px, menu empat halaman, semester dengan ArrowUp/Enter, import Markdown sintetis, query, reader, edit/save dua versi, selector versi keyboard dan kedua tombol export berhasil. Ini bukti permintaan download, bukan verifikasi file tersimpan disk.
+- Mobile 390×844: document scrollWidth = innerWidth = 390 saat snapshot/versi konflik; Sheet navigasi membuka, Escape menutup. Panel session reflow diperbaiki setelah screenshot menemukan kolom teks terlalu sempit; screenshot terbaru menunjukkan teks normal, tanpa overflow. Logout membersihkan workspace; buka ruang kosong berhasil. Tanpa auth config, revocation server tetap dilaporkan belum terkonfirmasi.
+- Axe WCAG2A/AA pada snapshot desktop: 0 violation, 0 incomplete, 27 passes; mobile setelah Sheet ditutup: 0 violation, 0 incomplete, 22 passes. Page errors kosong pada pemeriksaan final. Screenshot hanya sintetis di `/tmp/`; tidak memakai sumber pengguna. Dark token tersedia tetapi dark mode bukan surface yang diuji dalam tugas ini.
+- Delivery gate: komposisi shadcn PASS (CLI, komponen resmi, field/group/title); palet/ikon PASS (token existing, Lucide relevan); interaksi/keyboard PASS (alur di atas); mobile PASS (390px dan screenshot); privacy PASS untuk smoke sintetis tanpa upload sumber. Bukti ini bukan audit accessibility universal atau live-provider acceptance.
+
+## Tema dan spacing sidebar, 5 November 2026
+
+- Light tetap default: krem, sage, hijau hutan. Pengalih tema di footer sidebar mengaktifkan token dark existing selama halaman terbuka; pilihan tidak dipersistenkan.
+- Sidebar: inset menu 12px, padding isi 12px, tinggi target 44px, gap menu 6px; brand/footer sejajar pada 24px. Menu aktif memakai sidebar-primary; hover memakai sidebar-accent.
+- `bun run build` dan `bun run typecheck` lulus. Warning CSS sourcemap existing tetap.
+- Chromium: desktop 1440×1000 kedua tema diverifikasi visual, pengalih dua arah berfungsi; axe WCAG2A/AA masing-masing 0 violation/0 incomplete. Mobile 390×844: Sheet kedua tema, Escape, lebar dokumen 390px; dark setelah Sheet ditutup 0 violation/0 incomplete. Sheet terbuka 0 violation, 2 kategori incomplete (focus guard/inert dan kontras) memerlukan tinjauan manual. Audit saat animasi penutupan berjalan tidak dipakai sebagai hasil stabil. Page errors kosong.
+- Screenshot sintetis lokal `/tmp/sidebar-*.png`. Tidak ada deployment atau verifikasi provider live.
+
+## Koreksi light chalk dan indikator navigasi
+
+- Light diperjelas: background `#faf9f6`, sidebar `#f6f5f0`, hero terang `#eeeee3`; dark token tetap. Aktif light memakai sage pucat, bukan blok hijau gelap.
+- Navigasi memakai dua indikator terpisah: aktif dan hover; transform 200ms ease-out, hover memudar saat pointer keluar. CSS transition dapat diinterupsi; `motion-reduce:transition-none` tersedia. Tidak menambah dependency.
+- Build/typecheck lulus. Chromium desktop: seluruh menu, keyboard Tab/Enter, hover antar-menu, hover keluar (opacity final 0), aktif final translateY 50px. Hover diperlambat ke 2 detik (10% kecepatan), perpindahan antar-target menghasilkan posisi intermediate dan transition yang dapat diinterupsi. Aktif juga diuji playbackRate 0.1 sebelum perubahan hover. Screenshot sintetis `/tmp/study-chalk*.png`.
+- Axe final desktop: 0 violation, 1 incomplete kontras teks menu aktif; perlu tinjauan manual. Page errors kosong. Mobile smoke sebelum penambahan hover: dark, Sheet/menu, lebar dokumen 390px. Reduced-motion OS dan mobile setelah penambahan hover belum diuji runtime.
+
+## Switcher navbar dan circular reveal
+
+- Scope: switcher tema dan header dashboard, React/TanStack Start, Tailwind v4/shadcn. ENERGY 1 / RHYTHM 2 / MOTION 2. Palet chalk/sage dipertahankan untuk ruang baca; tombol 44×44 di sebelah Ruang lokal agar tersedia tanpa membuka sidebar. Sapuan lingkaran menghubungkan perubahan global dengan tombol asal, bukan dekorasi halaman.
+- `ThemeToggle` menggantikan tombol footer, label aksi dan aria-pressed mengikuti tema; dua ikon currentColor memakai cross-fade/scale/blur. Native View Transition + Web Animations membuka snapshot tema baru dari pusat tombol selama 450ms. Tidak ada dependency baru. Reduced motion atau browser tanpa API berganti langsung. Klik selama transisi diabaikan agar snapshot tidak bertabrakan. Preferensi masih hanya selama halaman terbuka.
+- `bun run build` dan `bun run typecheck` lulus; warning sourcemap existing tetap. Preview dimulai dari build terbaru. Obscura belum menghidrasi; Chromium sementara dipakai sesuai izin sebelumnya.
+- Desktop 1440×1000: klik gelap, sapuan diperlambat 10% (4500ms), screenshot intermediate menunjukkan dua tema dengan batas lingkaran; titik asal (1386,88.5) sama dengan pusat tombol 44×44. Klik terang menyapu kembali, kelas transisi dibersihkan. Rapid double click menghasilkan satu perubahan, cleanup selesai. Simulasi matchMedia reduced-motion serta API tidak tersedia: tema berubah tanpa animasi baru.
+- Mobile 390×844: Enter pada switcher mengubah tema, fokus tetap pada tombol; light/dark screenshot, scrollWidth 390. Sidebar dibuka lalu Escape menutup. Satu switcher saja tersedia. Axe header kedua tema desktop dan light mobile: 0 violation/0 incomplete, 12 passes. Page errors kosong. Ini bukan audit seluruh aplikasi atau uji perangkat fisik/OS reduced-motion.
+- Gate scope: R-03/25/26/32/34/35 PASS berdasarkan ukuran, audit header, kedua arah toggle, keyboard dan screenshot di atas. R-01/04/19/31 PASS: palet dipertahankan, Sun/Moon menjelaskan aksi, motion berasal dari tombol. R-02/17/18/23/24/27/28/33/36/37/38 PASS untuk perubahan ini: tidak menambah copy klaim, data, aset, navigasi atau data fetching; implementasi langsung di source. Liveliness/quality locks PASS untuk scope: dials eksplisit, tombol aksen tunggal navbar, struktur dan tipografi existing dipertahankan, tidak ada template/efek tambahan. Audit seluruh aplikasi di luar scope.
+
+- Koreksi separator navbar: override `data-vertical:self-stretch` bawaan dengan `data-vertical:self-center` pada pemakaian header saja. Build lulus; pengukuran Obscura menunjukkan pusat separator dan tombol sama-sama y=89px, tinggi separator 16px. Screenshot `/tmp/separator-centered.png` mengonfirmasi garis di tengah, bukan menempel border atas; hidrasi Obscura tetap di luar bukti ini.
+
 ## Belum diverifikasi / belum diimplementasikan
 
 - Audit accessibility end-to-end dan kompatibilitas Obscura belum tuntas; smoke test browser setup terbaru tercatat di atas.

@@ -10,6 +10,10 @@ import type { IndexedNote, SnapshotIndex } from '@/domain/snapshot-index'
 import { headingId, resolveSnapshotLink } from '@/domain/snapshot-links'
 import { Button } from './ui/button'
 import { SnapshotQuery } from './snapshot-queries'
+import { Field, FieldGroup, FieldLabel } from './ui/field'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { Alert, AlertDescription } from './ui/alert'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
 
 function Mermaid({ source }: { source: string }) {
   // Opaque sandbox: generated SVG and diagram directives never enter the app document.
@@ -81,9 +85,9 @@ export function SnapshotReader({ index, note, onNavigate }: { index: SnapshotInd
   return <article className="snapshot-reader min-w-0 break-words [&_th]:p-2 [&_td]:p-2 [&_th]:border [&_td]:border [&_p]:my-3 [&_li]:ml-5 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg" aria-label="Reader snapshot">
     <h3 className="break-all">{note.canonicalPath}</h3>
     <p>Snapshot lokal · hanya baca. Sumber tidak diubah.</p>
-    {note.versions.length > 1 && <label>Versi konflik <select className="w-full min-w-0 max-w-full" value={versionIndex} onChange={e => setVersionIndex(Number(e.target.value))}>{note.versions.map((v, i) => <option key={v.hash} value={i}>{v.hash}</option>)}</select></label>}
-    {version.diagnostics.map(d => <p key={d} role="note">{d}</p>)}
-    {notice && <p role="alert">{notice}</p>}
+    {note.versions.length > 1 && <FieldGroup><Field><FieldLabel htmlFor="snapshot-reader-version">Versi konflik</FieldLabel><Select items={note.versions.map((v, i) => ({ value: String(i), label: `Versi ${i + 1} · ${v.hash.slice(0, 12)}` }))} value={String(versionIndex)} onValueChange={value => { if (value !== null) setVersionIndex(Number(value)) }}><SelectTrigger id="snapshot-reader-version" className="w-full min-w-0"><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{note.versions.map((v, i) => <SelectItem key={v.hash} value={String(i)}>Versi {i + 1} · {v.hash.slice(0, 12)}</SelectItem>)}</SelectGroup></SelectContent></Select></Field></FieldGroup>}
+    {version.diagnostics.map(d => <Alert key={d} role="note"><AlertDescription>{d}</AlertDescription></Alert>)}
+    {notice && <Alert variant="destructive" role="alert"><AlertDescription>{notice}</AlertDescription></Alert>}
     <ReactMarkdown skipHtml remarkPlugins={[remarkGfm, remarkMath, wikilinks]} rehypePlugins={[[rehypeKatex, { trust: false, strict: 'error' }]]} urlTransform={url => url} components={{
       a: ({ href, children }) => {
         const target = href ?? ''
@@ -100,7 +104,12 @@ export function SnapshotReader({ index, note, onNavigate }: { index: SnapshotInd
       h5: ({ children }) => <h5 id={'snapshot-heading-' + headingId(plain(children))}>{children}</h5>,
       h6: ({ children }) => <h6 id={'snapshot-heading-' + headingId(plain(children))}>{children}</h6>,
       pre: ({ children }) => <div className="max-w-full overflow-x-auto"><pre>{children}</pre></div>,
-      table: ({ children }) => <div className="max-w-full overflow-x-auto"><table>{children}</table></div>,
+      table: ({ children }) => <Table>{children}</Table>,
+      thead: ({ children }) => <TableHeader>{children}</TableHeader>,
+      tbody: ({ children }) => <TableBody>{children}</TableBody>,
+      tr: ({ children }) => <TableRow>{children}</TableRow>,
+      th: ({ children }) => <TableHead>{children}</TableHead>,
+      td: ({ children }) => <TableCell>{children}</TableCell>,
       blockquote: ({ children }) => <Callout>{children}</Callout>,
       code: ({ className, children }) => className === 'language-mermaid' ? <Mermaid source={String(children)} /> : className === 'language-dataview' ? <SnapshotQuery index={index} note={note} source={String(children)} onNavigate={onNavigate} /> : <code className={className}>{children}</code>,
     }}>{body}</ReactMarkdown>

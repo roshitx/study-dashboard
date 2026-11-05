@@ -96,3 +96,7 @@ Status #24 lokal: latihan dari note snapshot memiliki preview versi, pilihan gan
 ## M7 — release
 
 Depends: milestones yang masuk scope rilis. Uji alur end-to-end, multi-semester, akses ponsel/keyboard, error recovery, export/draft, quota/latency dan restore. Update VALIDATION dengan bukti runtime/provider dan keterbatasan. Deploy ke akun Cloudflare tujuan yang sudah dikonfigurasi sesuai DEPLOYMENT, bukan ke hosting pengganti.
+
+## CI hermetic #28
+
+Workflow `.github/workflows/ci.yml` menjalankan frozen install, synthetic tests, build client/Worker lalu typecheck pada PR dan push main; Node 22.18.0, Bun dari packageManager, action dipin SHA, token contents read-only. Tanpa secrets, deploy, cache source atau artifact upload. Acceptance remote belum diklaim: workflow baru belum dijalankan GitHub; gate semua deliverable tetap terbuka.

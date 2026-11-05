@@ -4,6 +4,12 @@ import { Button } from '@/components/ui/button'
 import { indexSnapshot, type SnapshotIndex } from '@/domain/snapshot-index'
 import { SnapshotExplorer } from '@/components/snapshot-explorer'
 import { exportSnapshotLayer } from '@/domain/snapshot-draft'
+import { Download, X } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export function LocalImport() {
   const [report, setReport] = useState<ImportReport | null>(null)
@@ -22,81 +28,87 @@ export function LocalImport() {
       if (!(target instanceof Element) || target.closest('[data-snapshot-editor],[data-session-logout]')) return
       const control = target.closest('button,a,input,select,summary')
       if (!control) return
-      const leaving = !target.closest('#import-workspace') || control.textContent === 'Tutup snapshot' || control.id === 'local-files'
+      const leaving = !target.closest('#import-workspace') || control.hasAttribute('data-close-snapshot') || control.id === 'local-files'
       if ((dirty || (unexported && leaving)) && !window.confirm(dirty ? 'Draf belum disimpan. Lanjutkan dan buang draf?' : 'Versi lokal belum diexport. Tinggalkan snapshot?')) { event.preventDefault(); event.stopImmediatePropagation() }
     }
     window.addEventListener('beforeunload', unload)
     document.addEventListener('click', navigate, true)
     return () => { window.removeEventListener('beforeunload', unload); document.removeEventListener('click', navigate, true) }
   }, [dirty, unexported])
-  return <section id="import-workspace" className="card min-w-0 max-w-full" aria-labelledby="import-title">
-    <h2 id="import-title">Import snapshot lokal</h2>
-    <p>File hanya dibaca di browser. Sumber tidak diubah atau diunggah. Snapshot belum masuk navigasi/editor demo.</p>
-    <p>Markdown UTF-8 atau ZIP: maksimum 32 MiB input, 2.000 entri, 64 MiB ekstraksi, 2 MiB per file. Lampiran belum didukung.</p>
-    <label htmlFor="canonical-root">Canonical root</label>
-    <input id="canonical-root" className="w-full min-w-0" value={root} disabled={busy || !!report} onChange={e => setRoot(e.target.value)} />
-    <label htmlFor="vault-prefixes">Prefix sumber yang dipetakan (satu per baris)</label>
-    <textarea id="vault-prefixes" className="min-h-0 h-24" value={prefixes} disabled={busy || !!report} onChange={e => setPrefixes(e.target.value)} rows={2} />
-    <label htmlFor="local-files">Pilih file Markdown atau ZIP</label>
-    <input id="local-files" className="w-full min-w-0 max-w-full" type="file" accept=".md,.zip" multiple disabled={busy || dirty || unexported} onChange={async event => {
-      const files = Array.from(event.currentTarget.files ?? [])
-      event.currentTarget.value = ''
-      if (!files.length) return
-      setBusy(true); setError(''); setReport(null); setIndex(null); setDirty(false); setUnexported(false); setExportedLayers(new Set())
-      try {
-        const imported = await importLocalFiles(files)
-        setIndex(await indexSnapshot(imported.files, root, prefixes.split('\n').map(p => p.trim()).filter(Boolean)))
-        setReport(imported)
-      }
-      catch { setError('Import gagal. Pilih ulang file; sumber tetap tidak berubah.') }
-      finally { setBusy(false) }
-    }} />
-    <p role="status">{busy ? 'Memproses snapshot lokal…' : report ? `${report.files.length} file diterima; ${report.diagnostics.length} diagnostic; ${report.entries} entri diperiksa.` : 'Belum ada snapshot dipilih.'}</p>
-    {error && <p role="alert">{error}</p>}
-    {
-      report && <>
-        <Button variant="outline" onClick={() => { setReport(null); setIndex(null); setDirty(false); setUnexported(false); setExportedLayers(new Set()) }}>Tutup snapshot</Button>
-        <details><summary>File diterima ({report.files.length})</summary><ul>{report.files.map((f, i) => <li key={i} className="path">{f.path} · {f.bytes.length} byte</li>)}</ul></details>
-        {index && <>
-          <p role="status">{index.notes.length} path unik; {index.duplicateCount} duplikat identik; {index.conflictCount} konflik.</p>
-          <p>Export ZIP lokal: unduh setiap lapisan versi, lalu pilih semua ZIP bersama saat import ulang agar konflik tetap lengkap. File sumber tidak ditimpa.</p>
-          {Array.from({ length: Math.max(1, ...index.notes.map(n => n.versions.length)) }, (_, layer) => <Button key={layer} variant="outline" disabled={busy || dirty} onClick={async () => {
-            setBusy(true); setError('')
+  return <Card id="import-workspace" role="region" className="min-w-0 max-w-full" aria-labelledby="import-title">
+    <CardHeader>
+      <CardTitle><h2 id="import-title">Import snapshot lokal</h2></CardTitle>
+      <CardDescription>File hanya dibaca di browser. Sumber tidak diubah atau diunggah. Snapshot belum masuk navigasi/editor demo.</CardDescription>
+      <CardDescription>Markdown UTF-8 atau ZIP: maksimum 32 MiB input, 2.000 entri, 64 MiB ekstraksi, 2 MiB per file. Lampiran belum didukung.</CardDescription>
+    </CardHeader>
+    <CardContent className="flex min-w-0 flex-col gap-4">
+      <FieldGroup>
+        <Field><FieldLabel htmlFor="canonical-root">Canonical root</FieldLabel>
+          <Input id="canonical-root" className="w-full min-w-0" value={root} disabled={busy || !!report} onChange={e => setRoot(e.target.value)} /></Field>
+        <Field><FieldLabel htmlFor="vault-prefixes">Prefix sumber yang dipetakan (satu per baris)</FieldLabel>
+          <Textarea id="vault-prefixes" className="h-24 min-h-0" value={prefixes} disabled={busy || !!report} onChange={e => setPrefixes(e.target.value)} rows={2} /></Field>
+        <Field><FieldLabel htmlFor="local-files">Pilih file Markdown atau ZIP</FieldLabel>
+          <Input id="local-files" className="w-full min-w-0 max-w-full" type="file" accept=".md,.zip" multiple disabled={busy || dirty || unexported} onChange={async event => {
+            const files = Array.from(event.currentTarget.files ?? [])
+            event.currentTarget.value = ''
+            if (!files.length) return
+            setBusy(true); setError(''); setReport(null); setIndex(null); setDirty(false); setUnexported(false); setExportedLayers(new Set())
             try {
-              const blob = await exportSnapshotLayer(index, layer)
-              if (blob.size > 32 * 1024 ** 2) throw new Error('ZIP melebihi batas import 32 MiB; export dibatalkan.')
-              const url = URL.createObjectURL(blob); const link = document.createElement('a')
-              link.href = url; link.download = `snapshot-versi-${layer + 1}.zip`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000)
-              const next = new Set(exportedLayers).add(layer); setExportedLayers(next)
-              if (next.size === Math.max(...index.notes.map(n => n.versions.length))) setUnexported(false)
-            } catch (e) { setError(e instanceof Error ? e.message : 'Export gagal; versi lokal tetap dipertahankan.') }
+              const imported = await importLocalFiles(files)
+              setIndex(await indexSnapshot(imported.files, root, prefixes.split('\n').map(p => p.trim()).filter(Boolean)))
+              setReport(imported)
+            }
+            catch { setError('Import gagal. Pilih ulang file; sumber tetap tidak berubah.') }
             finally { setBusy(false) }
-          }}>Export ZIP lokal · versi {layer + 1}{exportedLayers.has(layer) ? ' · diunduh' : ''}</Button>)}
-          {unexported && <p role="status">Versi tersimpan hanya di memori; belum semua lapisan diexport.</p>}
-          <SnapshotExplorer index={index} dirty={dirty} onDirty={setDirty} onSave={async (path, bytes) => {
-            const added = await indexSnapshot([{ path, bytes }], root, [])
-            const current = index.notes.find(note => note.canonicalPath === path)!
-            const existing = current.versions.findIndex(version => version.hash === added.notes[0]!.versions[0]!.hash)
-            setIndex(previous => {
-              if (!previous) throw new Error('Snapshot sudah ditutup.')
-              const notes = previous.notes.map(note => note.canonicalPath === path ? { ...note, versions: [...note.versions, ...added.notes[0]!.versions.filter(v => !note.versions.some(old => old.hash === v.hash))] } : note)
-              return { ...previous, notes, conflictCount: notes.filter(n => n.versions.length > 1).length }
-            })
-            setUnexported(true); setExportedLayers(new Set())
-            return existing < 0 ? current.versions.length : existing
-          }} />
-          <details><summary>Indeks dan metadata</summary>{index.notes.map(note => <article key={note.canonicalPath}>
-            <h3 className="path">{note.canonicalPath}{note.versions.length > 1 ? ' · Konflik: semua versi dipertahankan' : ''}</h3>
-            {note.versions.map(version => <div key={version.hash}>
-              <p className="path">SHA-256: {version.hash}</p>
-              <p className="path">Sumber: {version.sourcePaths.join(', ')}</p>
-              <pre className="whitespace-pre-wrap break-all">{JSON.stringify(Object.fromEntries(version.properties), (_, value) => value instanceof Map ? Object.fromEntries(value) : value, 2)}</pre>
-              {version.diagnostics.map((diagnostic, i) => <p key={i}>{diagnostic}</p>)}
-            </div>)}
-          </article>)}</details>
-        </>}
-        {!!report.diagnostics.length && <details open><summary>Diagnostic ({report.diagnostics.length})</summary><ul>{report.diagnostics.map((d, i) => <li key={i}><span className="path">{d.path}</span>: {d.reason}</li>)}</ul></details>}
-      </>
-    }
-  </section>
+          }} /></Field>
+      </FieldGroup>
+      <p role="status">{busy ? 'Memproses snapshot lokal…' : report ? `${report.files.length} file diterima; ${report.diagnostics.length} diagnostic; ${report.entries} entri diperiksa.` : 'Belum ada snapshot dipilih.'}</p>
+      {error && <Alert variant="destructive" role="alert"><AlertDescription>{error}</AlertDescription></Alert>}
+      {
+        report && <>
+          <Button variant="outline" data-close-snapshot onClick={() => { setReport(null); setIndex(null); setDirty(false); setUnexported(false); setExportedLayers(new Set()) }}><X data-icon="inline-start" />Tutup snapshot</Button>
+          <details><summary>File diterima ({report.files.length})</summary><ul>{report.files.map((f, i) => <li key={i} className="path">{f.path} · {f.bytes.length} byte</li>)}</ul></details>
+          {index && <>
+            <p role="status">{index.notes.length} path unik; {index.duplicateCount} duplikat identik; {index.conflictCount} konflik.</p>
+            <p>Export ZIP lokal: unduh setiap lapisan versi, lalu pilih semua ZIP bersama saat import ulang agar konflik tetap lengkap. File sumber tidak ditimpa.</p>
+            {Array.from({ length: Math.max(1, ...index.notes.map(n => n.versions.length)) }, (_, layer) => <Button key={layer} variant="outline" disabled={busy || dirty} onClick={async () => {
+              setBusy(true); setError('')
+              try {
+                const blob = await exportSnapshotLayer(index, layer)
+                if (blob.size > 32 * 1024 ** 2) throw new Error('ZIP melebihi batas import 32 MiB; export dibatalkan.')
+                const url = URL.createObjectURL(blob); const link = document.createElement('a')
+                link.href = url; link.download = `snapshot-versi-${layer + 1}.zip`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000)
+                const next = new Set(exportedLayers).add(layer); setExportedLayers(next)
+                if (next.size === Math.max(...index.notes.map(n => n.versions.length))) setUnexported(false)
+              } catch (e) { setError(e instanceof Error ? e.message : 'Export gagal; versi lokal tetap dipertahankan.') }
+              finally { setBusy(false) }
+            }}><Download data-icon="inline-start" />Export ZIP lokal · versi {layer + 1}{exportedLayers.has(layer) ? ' · diunduh' : ''}</Button>)}
+            {unexported && <p role="status">Versi tersimpan hanya di memori; belum semua lapisan diexport.</p>}
+            <SnapshotExplorer index={index} dirty={dirty} onDirty={setDirty} onSave={async (path, bytes) => {
+              const added = await indexSnapshot([{ path, bytes }], root, [])
+              const current = index.notes.find(note => note.canonicalPath === path)!
+              const existing = current.versions.findIndex(version => version.hash === added.notes[0]!.versions[0]!.hash)
+              setIndex(previous => {
+                if (!previous) throw new Error('Snapshot sudah ditutup.')
+                const notes = previous.notes.map(note => note.canonicalPath === path ? { ...note, versions: [...note.versions, ...added.notes[0]!.versions.filter(v => !note.versions.some(old => old.hash === v.hash))] } : note)
+                return { ...previous, notes, conflictCount: notes.filter(n => n.versions.length > 1).length }
+              })
+              setUnexported(true); setExportedLayers(new Set())
+              return existing < 0 ? current.versions.length : existing
+            }} />
+            <details><summary>Indeks dan metadata</summary>{index.notes.map(note => <article key={note.canonicalPath}>
+              <h3 className="path">{note.canonicalPath}{note.versions.length > 1 ? ' · Konflik: semua versi dipertahankan' : ''}</h3>
+              {note.versions.map(version => <div key={version.hash}>
+                <p className="path">SHA-256: {version.hash}</p>
+                <p className="path">Sumber: {version.sourcePaths.join(', ')}</p>
+                <pre className="whitespace-pre-wrap break-all">{JSON.stringify(Object.fromEntries(version.properties), (_, value) => value instanceof Map ? Object.fromEntries(value) : value, 2)}</pre>
+                {version.diagnostics.map((diagnostic, i) => <p key={i}>{diagnostic}</p>)}
+              </div>)}
+            </article>)}</details>
+          </>}
+          {!!report.diagnostics.length && <details open><summary>Diagnostic ({report.diagnostics.length})</summary><ul>{report.diagnostics.map((d, i) => <li key={i}><span className="path">{d.path}</span>: {d.reason}</li>)}</ul></details>}
+        </>
+      }
+    </CardContent>
+  </Card>
 }

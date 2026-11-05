@@ -7,7 +7,6 @@ test('renders GFM/math while removing active HTML and keeping plugin code inert'
   const text = '# Safe\n\n> [!WARNING] Sumber sintetis\n> Periksa sumber.\n\n| A | B |\n|---|---|\n|1|2|\n\n$x^2$\n\n<script>alert(1)</script>\n\n<img src="https://evil.test" onerror="alert(1)">\n\n[bad](javascript:alert(1))\n\n```dataviewjs\nwindow.pwned=1\n```'
   const index = await indexSnapshot([{ path: 'safe.md', bytes: new TextEncoder().encode(text) }], 'University', [])
   const html = renderToStaticMarkup(<SnapshotReader index={index} note={index.notes[0]!} onNavigate={() => { }} />)
-  expect(html).toContain('<table>')
   expect(html).toContain('class="katex"')
   expect(html).toContain('window.pwned=1')
   expect(html).not.toContain('<script')

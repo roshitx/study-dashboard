@@ -100,3 +100,11 @@ Grammar: `TABLE field [as Label], ...`; opsional `FROM "folder literal"` dengan 
 ## Stack terkunci
 
 TanStack Start/Router, React, TypeScript, Vite, Cloudflare Vite plugin dan Wrangler. Bun mengelola dependency exact melalui package.json dan bun.lock. UI memakai shadcn/ui Base UI, preset Nova dan Tailwind CSS v4; alias `@/` menunjuk `src/`. Tambahkan komponen resmi sesuai kebutuhan dengan `bunx --bun shadcn@latest add @shadcn/<komponen>` setelah membaca dokumentasinya. D1 diusulkan untuk metadata aplikasi; R2 existing tetap sumber vault terenkripsi. Google Sheets/Calendar menggunakan API resmi milik aplikasi ini dengan OAuth terpisah, bukan sesi plugin ChatGPT.
+
+## Vault uji RClone #17
+
+Halaman Koneksi menyediakan unlock/read/lock read-only. Password dan dekripsi hanya di browser worker, tanpa persistence; lock/logout/unmount menghentikan worker dan membuang referensi reader. Tidak menjanjikan physical memory wipe. Adapter `@fyears/rclone-crypt@0.0.7` mengikuti Remotely Save 0.5.25: nama base64, salt kosong; bukan library resmi rclone.
+
+Transport `/api/vault/list` dan `/api/vault/object` wajib owner, no-store, binding `VAULT_TEST_BUCKET`, prefix tetap `interop/`, maksimal 100 objek/halaman, 2.000 objek/client, 8 MiB ciphertext dan 2 MiB plaintext Markdown. Tidak ada endpoint write. Binding development memakai bucket lokal `study-vault-interop`; staging memakai bucket remote terpisah bernama sama dengan fixture sintetis saja. Empty vault atau tanpa Markdown tidak membuktikan password valid.
+
+Fixture `tests/fixtures/rclone.json` dibuat official rclone v1.75.2 dengan password sintetis publik; bukan data pengguna. Tests membuktikan decrypt lintas implementasi, salah password, corruption dan truncation. Smoke browser memakai transport fixture yang diintersep, bukan bukti koneksi R2 live. Acceptance remote #17 tetap terbuka sampai fixture staging diuji owner. Password fixture: `study-fixture-only`. Bucket utama tidak ditulis.

@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiMetadataRouteImport } from './routes/api.metadata'
 import { Route as ApiSessionRouteImport } from './routes/api.session'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api.auth.logout'
+import { Route as ApiVaultListRouteImport } from './routes/api.vault.list'
+import { Route as ApiVaultObjectRouteImport } from './routes/api.vault.object'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api.auth.google.callback'
 import { Route as ApiAuthGoogleLoginRouteImport } from './routes/api.auth.google.login'
 
@@ -36,6 +38,16 @@ const ApiAuthLogoutRoute = ApiAuthLogoutRouteImport.update({
   path: '/api/auth/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVaultListRoute = ApiVaultListRouteImport.update({
+  id: '/api/vault/list',
+  path: '/api/vault/list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVaultObjectRoute = ApiVaultObjectRouteImport.update({
+  id: '/api/vault/object',
+  path: '/api/vault/object',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthGoogleCallbackRoute = ApiAuthGoogleCallbackRouteImport.update({
   id: '/api/auth/google/callback',
   path: '/api/auth/google/callback',
@@ -52,6 +64,8 @@ export interface FileRoutesByFullPath {
   '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/vault/list': typeof ApiVaultListRoute
+  '/api/vault/object': typeof ApiVaultObjectRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/login': typeof ApiAuthGoogleLoginRoute
 }
@@ -60,6 +74,8 @@ export interface FileRoutesByTo {
   '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/vault/list': typeof ApiVaultListRoute
+  '/api/vault/object': typeof ApiVaultObjectRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/login': typeof ApiAuthGoogleLoginRoute
 }
@@ -69,6 +85,8 @@ export interface FileRoutesById {
   '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/vault/list': typeof ApiVaultListRoute
+  '/api/vault/object': typeof ApiVaultObjectRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
   '/api/auth/google/login': typeof ApiAuthGoogleLoginRoute
 }
@@ -79,6 +97,8 @@ export interface FileRouteTypes {
     | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
+    | '/api/vault/list'
+    | '/api/vault/object'
     | '/api/auth/google/callback'
     | '/api/auth/google/login'
   fileRoutesByTo: FileRoutesByTo
@@ -87,6 +107,8 @@ export interface FileRouteTypes {
     | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
+    | '/api/vault/list'
+    | '/api/vault/object'
     | '/api/auth/google/callback'
     | '/api/auth/google/login'
   id:
@@ -95,6 +117,8 @@ export interface FileRouteTypes {
     | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
+    | '/api/vault/list'
+    | '/api/vault/object'
     | '/api/auth/google/callback'
     | '/api/auth/google/login'
   fileRoutesById: FileRoutesById
@@ -104,6 +128,8 @@ export interface RootRouteChildren {
   ApiMetadataRoute: typeof ApiMetadataRoute
   ApiSessionRoute: typeof ApiSessionRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
+  ApiVaultListRoute: typeof ApiVaultListRoute
+  ApiVaultObjectRoute: typeof ApiVaultObjectRoute
   ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
   ApiAuthGoogleLoginRoute: typeof ApiAuthGoogleLoginRoute
 }
@@ -138,6 +164,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthLogoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/vault/list': {
+      id: '/api/vault/list'
+      path: '/api/vault/list'
+      fullPath: '/api/vault/list'
+      preLoaderRoute: typeof ApiVaultListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/vault/object': {
+      id: '/api/vault/object'
+      path: '/api/vault/object'
+      fullPath: '/api/vault/object'
+      preLoaderRoute: typeof ApiVaultObjectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/google/callback': {
       id: '/api/auth/google/callback'
       path: '/api/auth/google/callback'
@@ -160,6 +200,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMetadataRoute: ApiMetadataRoute,
   ApiSessionRoute: ApiSessionRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
+  ApiVaultListRoute: ApiVaultListRoute,
+  ApiVaultObjectRoute: ApiVaultObjectRoute,
   ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,
   ApiAuthGoogleLoginRoute: ApiAuthGoogleLoginRoute,
 }

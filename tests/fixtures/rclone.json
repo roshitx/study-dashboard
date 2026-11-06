@@ -1,0 +1,14 @@
+{
+  "generator": "rclone v1.75.2",
+  "filenameEncoding": "base64",
+  "salt": "",
+  "password": "study-fixture-only",
+  "path": "Modul/Contoh.md",
+  "plaintext": "# Fixture sintetis\n\nBukan catatan pengguna.\n",
+  "objects": [
+    {
+      "key": "tmiSOfqfBMGBazD7z9L05g/qpg5Sq25N9fhIeRZa5TQMQ",
+      "base64": "UkNMT05FAAC8PLKZl2QPmDj3Z1CmvGr7PNu2e7h/O2CVlV3qOOkVjqmC/1UQbBJiRBgpf9/ebv4kwuTFTrtYGQ81RLhD2CPDEMJWjfrRcX5RVP3xHZkEAAYvHEo="
+    }
+  ]
+}

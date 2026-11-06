@@ -23,6 +23,12 @@
       "migrations_dir": "migrations"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "VAULT_TEST_BUCKET",
+      "bucket_name": "study-vault-interop"
+    }
+  ],
   "env": {
     "staging": {
       "name": "study-dashboard-staging",
@@ -30,6 +36,12 @@
         {
           "pattern": "study-staging.roshit.id",
           "custom_domain": true
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "VAULT_TEST_BUCKET",
+          "bucket_name": "study-vault-interop"
         }
       ],
       "d1_databases": [

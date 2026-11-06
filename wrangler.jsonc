@@ -22,5 +22,30 @@
       "database_name": "study-metadata-local",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  "env": {
+    "staging": {
+      "name": "study-dashboard-staging",
+      "routes": [
+        {
+          "pattern": "study-staging.roshit.id",
+          "custom_domain": true
+        }
+      ],
+      "d1_databases": [
+        {
+          "binding": "AUTH_DB",
+          "database_name": "study-auth-staging",
+          "database_id": "187cdd51-1e7f-4938-94db-568745aa0317",
+          "migrations_dir": "migrations-auth"
+        },
+        {
+          "binding": "METADATA_DB",
+          "database_name": "study-metadata-staging",
+          "database_id": "ed780c14-6a0f-48ce-9271-379e07c8bcb5",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
 }

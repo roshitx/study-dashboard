@@ -155,6 +155,7 @@ Starter hanya memiliki shell UI sintetis dan editor memori. Seluruh source snaps
 - #38 merged ke feat/private-metadata, #39 ke feat/study-ui-polish; origin/main a84c7de hanya memuat metadata. Branch fix/hermetic-ci menggabungkan hasil merge branch bertingkat tanpa mengubah implementasi UI/latihan. Tidak menimpa main atau melakukan deployment.
 - Workflow baru: pull_request, push main, workflow_dispatch; ubuntu-24.04, Node 22.18.0, Bun sesuai packageManager. Checkout/setup actions dipin SHA hasil API GitHub. Contents read-only, checkout tanpa persisted credentials, timeout 15 menit, concurrency cancellation. Hanya install/test/build/typecheck; tanpa secret, vault input, artifact upload atau deploy.
 - Smoke command lokal berurutan setelah integrasi: bun install --frozen-lockfile; bun test (29 pass, 158 assertions); bun run build; bun run typecheck. Semua lulus. Ini bukan bukti runner Linux/GitHub; run remote menunggu publish workflow. Warning CSS sourcemap existing tetap. UI tidak dimodifikasi; runtime browser sebelumnya berlaku untuk commit yang sama.
+- Update 6 November 2026: PR #40 memicu GitHub Actions pada f34480adb0563f0bd47aacf0904df6f4df8523fe. Run 42150136795, job Bun tests, Worker build and types selesai success di runner ubuntu-24.04. Frozen install/tests/build/typecheck remote lulus: https://github.com/roshitx/study-dashboard/actions/runs/42150136795 . Ini tidak membuktikan provider live, staging atau deliverable masa depan; #28 release-wide tetap terbuka.
 
 ## M2 auth — verifikasi tambahan
 

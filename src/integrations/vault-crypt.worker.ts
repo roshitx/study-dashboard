@@ -23,6 +23,10 @@ self.onmessage = async (event: MessageEvent) => {
       // Validate the Markdown encoding before exposing it to the reader.
       new TextDecoder('utf-8', { fatal: true }).decode(plain)
       self.postMessage({ id, ok: true, value: plain }, { transfer: [plain.buffer] })
+    } else if (action === 'encrypt') {
+      if (!cipher || !(bytes instanceof Uint8Array) || bytes.length > 2 * 1024 ** 2) throw new Error()
+      const encrypted = await cipher.encryptData(bytes, undefined)
+      self.postMessage({ id, ok: true, value: encrypted }, { transfer: [encrypted.buffer] })
     } else throw new Error()
   } catch {
     self.postMessage({ id, ok: false })

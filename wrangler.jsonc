@@ -32,6 +32,9 @@
   "env": {
     "staging": {
       "name": "study-dashboard-staging",
+      "vars": {
+        "VAULT_TEST_WRITES": "enabled"
+      },
       "routes": [
         {
           "pattern": "study-staging.roshit.id",
@@ -42,6 +45,10 @@
         {
           "binding": "VAULT_TEST_BUCKET",
           "bucket_name": "study-vault-interop"
+        },
+        {
+          "binding": "VAULT_HISTORY_BUCKET",
+          "bucket_name": "study-vault-interop-history"
         }
       ],
       "d1_databases": [

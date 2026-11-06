@@ -24,13 +24,14 @@ async function setup() {
     async get(key: string) {
       calls.push(key)
       if (key === 'interop/missing') return null
-      if (key === 'interop/large') return { size: 8 * 1024 * 1024 + 1, body: new ReadableStream<Uint8Array>() }
-      return { size: 3, body: new Blob([new Uint8Array([1, 2, 3])]).stream() }
+      if (key === 'interop/large') return { size: 8 * 1024 * 1024 + 1, etag: 'large', httpEtag: '"large"', body: new ReadableStream<Uint8Array>() }
+      return { size: 3, etag: 'old', httpEtag: '"old"', body: new Blob([new Uint8Array([1, 2, 3])]).stream() }
     },
+    async put() { return null },
   }
   const env: VaultEnv = { AUTH_DB: db, GOOGLE_CLIENT_ID: 'synthetic', GOOGLE_CLIENT_SECRET: 'synthetic', GOOGLE_REDIRECT_URI: 'https://study.example/api/auth/google/callback', AUTH_OWNER_EMAIL: 'owner@example.test', VAULT_TEST_BUCKET: bucket }
   const headers = { Cookie: '__Host-study-session=' + token }
-  const send = (path: string, init: RequestInit = {}) => handleVault(new Request('https://study.example' + path, { ...init, headers }), env)
+  const send = (path: string, init: RequestInit = {}) => handleVault(new Request('https://study.example' + path, { ...init, headers: { ...headers, ...init.headers } }), env)
   return { sqlite, env, calls, send }
 }
 
@@ -72,6 +73,7 @@ test('vault reads bounded encrypted bytes and reports generic failures', async (
     const object = await send('/api/vault/object?key=dir%2Ffile')
     expect(object.status).toBe(200)
     expect(object.headers.get('Cache-Control')).toBe('no-store')
+    expect(object.headers.get('ETag')).toBe('"old"')
     expect(Array.from(new Uint8Array(await object.arrayBuffer()))).toEqual([1, 2, 3])
     expect(calls).toEqual(['interop/dir/file'])
     expect((await send('/api/vault/object?key=missing')).status).toBe(404)
@@ -83,5 +85,77 @@ test('vault reads bounded encrypted bytes and reports generic failures', async (
     const failure = await send('/api/vault/list')
     expect(failure.status).toBe(503)
     expect(await failure.text()).not.toContain('private key')
+  } finally { sqlite.close() }
+})
+
+test('conditional writes archive ciphertext, reject stale revisions and restore history', async () => {
+  const { sqlite, env, send } = await setup()
+  const bytes = new TextEncoder().encode('RCLONE\0\0ciphertext')
+  const replacement = new TextEncoder().encode('RCLONE\0\0replacement')
+  type Stored = { bytes: Uint8Array; etag: string; customMetadata?: Record<string, string> }
+  const live = new Map<string, Stored>([['interop/file', { bytes, etag: 'one' }]])
+  const history = new Map<string, Stored>()
+  let version = 1
+  let race = false
+  let fail = false
+  let archiveFail = false
+  const makeBucket = (store: Map<string, Stored>) => ({
+    async get(key: string) {
+      const item = store.get(key)
+      return item ? { size: item.bytes.length, etag: item.etag, httpEtag: `"${item.etag}"`, customMetadata: item.customMetadata, body: new Blob([new Uint8Array(item.bytes)]).stream() } : null
+    },
+    async list(options: { prefix: string; limit: number }) {
+      return { objects: [...store].filter(([key]) => key.startsWith(options.prefix)).map(([key, item]) => ({ key, size: item.bytes.length, customMetadata: item.customMetadata })), truncated: false as const }
+    },
+    async put(key: string, value: Uint8Array | ArrayBuffer | ReadableStream, options?: { onlyIf?: { etagMatches?: string; etagDoesNotMatch?: string }; customMetadata?: Record<string, string> }) {
+      if (archiveFail && store === history) throw new Error('archive unavailable')
+      if (fail && store === live) throw new Error('private')
+      if (race && store === live) { race = false; store.set(key, { bytes, etag: 'raced' }) }
+      if (options?.onlyIf?.etagMatches && store.get(key)?.etag !== options.onlyIf.etagMatches) return null
+      if (options?.onlyIf?.etagDoesNotMatch === '*' && store.has(key)) return null
+      const data = new Uint8Array(await new Response(value as BodyInit).arrayBuffer())
+      const etag = `v${++version}`
+      store.set(key, { bytes: data, etag, customMetadata: options?.customMetadata })
+      return { etag, httpEtag: `"${etag}"` }
+    },
+  })
+  env.VAULT_TEST_BUCKET = makeBucket(live)
+  env.VAULT_HISTORY_BUCKET = makeBucket(history)
+  env.VAULT_TEST_WRITES = 'enabled'
+  const headers = { Origin: 'https://study.example', 'Content-Type': 'application/octet-stream', 'If-Match': '"one"' }
+  try {
+    expect((await send('/api/vault/object?key=file', { method: 'PUT', headers: { 'Content-Type': headers['Content-Type'], 'If-Match': headers['If-Match'] }, body: bytes })).status).toBe(403)
+    expect((await send('/api/vault/object?key=file', { method: 'PUT', headers: { ...headers, 'If-Match': '*' }, body: bytes })).status).toBe(400)
+    expect((await send('/api/vault/object?key=file', { method: 'PUT', headers, body: 'plaintext' })).status).toBe(400)
+    expect((await send('/api/vault/history?key=file&id=../escape', { method: 'POST', headers })).status).toBe(400)
+    expect((await send('/api/vault/history?key=other&id=00000000-0000-4000-8000-000000000000', { method: 'POST', headers })).status).toBe(404)
+    expect((await send('/api/vault/object?key=file', { method: 'PUT', headers: { ...headers, Origin: 'https://evil.example' }, body: bytes })).status).toBe(403)
+    env.VAULT_TEST_WRITES = undefined
+    expect((await send('/api/vault/object?key=file', { method: 'PUT', headers, body: bytes })).status).toBe(503)
+    env.VAULT_TEST_WRITES = 'enabled'
+    race = true
+    expect((await send('/api/vault/object?key=file', { method: 'PUT', headers, body: bytes })).status).toBe(409)
+    archiveFail = true
+    expect((await send('/api/vault/object?key=file', { method: 'PUT', headers: { ...headers, 'If-Match': '"raced"' }, body: replacement })).status).toBe(503)
+    expect(live.get('interop/file')?.bytes).toEqual(bytes)
+    archiveFail = false
+    const saved = await send('/api/vault/object?key=file', { method: 'PUT', headers: { ...headers, 'If-Match': '"raced"' }, body: replacement })
+    expect(saved.status).toBe(200)
+    expect(live.get('interop/file')?.bytes).toEqual(replacement)
+    const savedBody = await saved.json() as { revision: string }
+    const revision = savedBody.revision
+    const listed = await (await send('/api/vault/history?key=file')).json() as { items: { id: string; revision: string }[] }
+    expect(listed.items.length).toBeGreaterThan(0)
+    expect(listed.items.some((item: { revision: string }) => item.revision === '"raced"')).toBe(true)
+    expect([...history.keys()].every(key => !key.includes('file'))).toBe(true)
+    expect([...live.keys()]).toEqual(['interop/file'])
+    const restored = await send(`/api/vault/history?key=file&id=${listed.items[0].id}`, { method: 'POST', headers: { Origin: headers.Origin, 'If-Match': revision } })
+    expect(restored.status).toBe(200)
+    expect(live.get('interop/file')?.bytes).toEqual(bytes)
+    fail = true
+    const restoredBody = await restored.json() as { revision: string }
+    const uncertain = await send('/api/vault/object?key=file', { method: 'PUT', headers: { ...headers, 'If-Match': restoredBody.revision }, body: bytes })
+    expect(uncertain.status).toBe(503)
+    expect(await uncertain.json()).toEqual({ error: 'uncertain_write' })
   } finally { sqlite.close() }
 })

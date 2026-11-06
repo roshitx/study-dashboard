@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiMetadataRouteImport } from './routes/api.metadata'
 import { Route as ApiSessionRouteImport } from './routes/api.session'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api.auth.logout'
+import { Route as ApiVaultHistoryRouteImport } from './routes/api.vault.history'
 import { Route as ApiVaultListRouteImport } from './routes/api.vault.list'
 import { Route as ApiVaultObjectRouteImport } from './routes/api.vault.object'
 import { Route as ApiAuthGoogleCallbackRouteImport } from './routes/api.auth.google.callback'
@@ -36,6 +37,11 @@ const ApiSessionRoute = ApiSessionRouteImport.update({
 const ApiAuthLogoutRoute = ApiAuthLogoutRouteImport.update({
   id: '/api/auth/logout',
   path: '/api/auth/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVaultHistoryRoute = ApiVaultHistoryRouteImport.update({
+  id: '/api/vault/history',
+  path: '/api/vault/history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiVaultListRoute = ApiVaultListRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/vault/history': typeof ApiVaultHistoryRoute
   '/api/vault/list': typeof ApiVaultListRoute
   '/api/vault/object': typeof ApiVaultObjectRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/vault/history': typeof ApiVaultHistoryRoute
   '/api/vault/list': typeof ApiVaultListRoute
   '/api/vault/object': typeof ApiVaultObjectRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/vault/history': typeof ApiVaultHistoryRoute
   '/api/vault/list': typeof ApiVaultListRoute
   '/api/vault/object': typeof ApiVaultObjectRoute
   '/api/auth/google/callback': typeof ApiAuthGoogleCallbackRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
+    | '/api/vault/history'
     | '/api/vault/list'
     | '/api/vault/object'
     | '/api/auth/google/callback'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
+    | '/api/vault/history'
     | '/api/vault/list'
     | '/api/vault/object'
     | '/api/auth/google/callback'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
+    | '/api/vault/history'
     | '/api/vault/list'
     | '/api/vault/object'
     | '/api/auth/google/callback'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   ApiMetadataRoute: typeof ApiMetadataRoute
   ApiSessionRoute: typeof ApiSessionRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
+  ApiVaultHistoryRoute: typeof ApiVaultHistoryRoute
   ApiVaultListRoute: typeof ApiVaultListRoute
   ApiVaultObjectRoute: typeof ApiVaultObjectRoute
   ApiAuthGoogleCallbackRoute: typeof ApiAuthGoogleCallbackRoute
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/logout'
       fullPath: '/api/auth/logout'
       preLoaderRoute: typeof ApiAuthLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/vault/history': {
+      id: '/api/vault/history'
+      path: '/api/vault/history'
+      fullPath: '/api/vault/history'
+      preLoaderRoute: typeof ApiVaultHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/vault/list': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMetadataRoute: ApiMetadataRoute,
   ApiSessionRoute: ApiSessionRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
+  ApiVaultHistoryRoute: ApiVaultHistoryRoute,
   ApiVaultListRoute: ApiVaultListRoute,
   ApiVaultObjectRoute: ApiVaultObjectRoute,
   ApiAuthGoogleCallbackRoute: ApiAuthGoogleCallbackRoute,

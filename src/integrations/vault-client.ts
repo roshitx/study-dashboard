@@ -1,3 +1,5 @@
+export class VaultConflictError extends Error { }
+export class VaultUncertainError extends Error { }
 export interface VaultEntry { key: string; path: string; size: number }
 
 export class VaultSession {
@@ -49,7 +51,9 @@ export class VaultSession {
     const result = new Uint8Array(size)
     let offset = 0
     for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.length }
-    return result
+    const revision = response.headers.get('ETag')
+    if (!revision) throw new Error('Revisi vault tidak tersedia.')
+    return { bytes: result, revision }
   }
 
   async unlock(password: string): Promise<VaultEntry[]> {
@@ -93,7 +97,7 @@ export class VaultSession {
       if (!entries.length || new Set(entries.map(entry => entry.path)).size !== entries.length) throw new Error('Vault uji harus berisi Markdown terenkripsi.')
       const bytes = await this.ciphertext(entries[0]!.key, controller.signal)
       if (generation !== this.generation) throw new Error('Vault terkunci.')
-      await this.call('read', { bytes })
+      await this.call('read', { bytes: bytes.bytes })
       if (generation !== this.generation) throw new Error('Vault terkunci.')
       this.entries = entries
       this.unlocked = true
@@ -104,14 +108,59 @@ export class VaultSession {
     }
   }
 
-  async read(key: string): Promise<{ path: string; bytes: Uint8Array }> {
+  async read(key: string): Promise<{ path: string; bytes: Uint8Array; revision: string }> {
     const entry = this.entries.find(item => item.key === key)
     if (!this.unlocked || !entry || !this.controller) throw new Error('Vault terkunci.')
     const generation = this.generation
     const bytes = await this.ciphertext(key, this.controller.signal)
     if (generation !== this.generation) throw new Error('Vault terkunci.')
-    const plain = await this.call('read', { bytes }) as Uint8Array
+    const plain = await this.call('read', { bytes: bytes.bytes }) as Uint8Array
     if (generation !== this.generation) throw new Error('Vault terkunci.')
-    return { path: entry.path, bytes: plain }
+    return { path: entry.path, bytes: plain, revision: bytes.revision }
+  }
+
+  private active(key: string) {
+    if (!this.unlocked || !this.entries.some(entry => entry.key === key) || !this.controller) throw new Error('Vault terkunci.')
+    return { generation: this.generation, signal: this.controller.signal }
+  }
+
+  private async mutation(url: string, init: RequestInit, generation: number) {
+    let response: Response
+    try { response = await fetch(url, { ...init, cache: 'no-store', signal: this.controller?.signal }) }
+    catch { throw new VaultUncertainError('Hasil save belum pasti. Baca remote sebelum mencoba lagi.') }
+    if (generation !== this.generation) throw new VaultUncertainError('Vault terkunci; hasil save perlu diperiksa ulang.')
+    if (response.status === 409) throw new VaultConflictError('Revisi remote berubah.')
+    if (response.status >= 500) throw new VaultUncertainError('Hasil save belum pasti. Baca remote sebelum mencoba lagi.')
+    if (!response.ok) throw new Error('Operasi vault ditolak.')
+    let value: { revision?: unknown }
+    try { value = await response.json() as { revision?: unknown } }
+    catch { throw new VaultUncertainError('Revisi save belum terkonfirmasi.') }
+    if (!value || typeof value.revision !== 'string' || !value.revision || generation !== this.generation) throw new VaultUncertainError('Revisi save belum terkonfirmasi.')
+    return { revision: value.revision }
+  }
+
+  async save(key: string, bytes: Uint8Array, expectedRevision: string): Promise<{ revision: string }> {
+    const { generation } = this.active(key)
+    const ciphertext = await this.call('encrypt', { bytes }) as Uint8Array
+    if (generation !== this.generation) throw new Error('Vault terkunci.')
+    return this.mutation('/api/vault/object?' + new URLSearchParams({ key }), {
+      method: 'PUT', headers: { 'Content-Type': 'application/octet-stream', 'If-Match': expectedRevision }, body: ciphertext as BodyInit,
+    }, generation)
+  }
+
+  async history(key: string): Promise<{ id: string; revision: string }[]> {
+    const { generation, signal } = this.active(key)
+    const response = await fetch('/api/vault/history?' + new URLSearchParams({ key }), { cache: 'no-store', signal })
+    if (!response.ok || generation !== this.generation) throw new Error('Histori tidak tersedia.')
+    const value = await response.json() as { items?: { id: string; revision: string }[] }
+    if (!value || generation !== this.generation || !Array.isArray(value.items) || value.items.length > 100 || value.items.some(item => !item || typeof item.id !== 'string' || typeof item.revision !== 'string')) throw new Error('Histori tidak valid.')
+    return value.items
+  }
+
+  async recover(key: string, id: string, expectedRevision: string): Promise<{ revision: string }> {
+    const { generation } = this.active(key)
+    return this.mutation('/api/vault/history?' + new URLSearchParams({ key, id }), {
+      method: 'POST', headers: { 'If-Match': expectedRevision },
+    }, generation)
   }
 }

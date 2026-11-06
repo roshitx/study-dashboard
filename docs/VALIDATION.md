@@ -155,3 +155,18 @@ Starter hanya memiliki shell UI sintetis dan editor memori. Seluruh source snaps
 - #38 merged ke feat/private-metadata, #39 ke feat/study-ui-polish; origin/main a84c7de hanya memuat metadata. Branch fix/hermetic-ci menggabungkan hasil merge branch bertingkat tanpa mengubah implementasi UI/latihan. Tidak menimpa main atau melakukan deployment.
 - Workflow baru: pull_request, push main, workflow_dispatch; ubuntu-24.04, Node 22.18.0, Bun sesuai packageManager. Checkout/setup actions dipin SHA hasil API GitHub. Contents read-only, checkout tanpa persisted credentials, timeout 15 menit, concurrency cancellation. Hanya install/test/build/typecheck; tanpa secret, vault input, artifact upload atau deploy.
 - Smoke command lokal berurutan setelah integrasi: bun install --frozen-lockfile; bun test (29 pass, 158 assertions); bun run build; bun run typecheck. Semua lulus. Ini bukan bukti runner Linux/GitHub; run remote menunggu publish workflow. Warning CSS sourcemap existing tetap. UI tidak dimodifikasi; runtime browser sebelumnya berlaku untuk commit yang sama.
+
+## M2 auth — verifikasi tambahan
+
+- Pengguna mengonfirmasi login Google nyata berhasil. Ini laporan pengguna, bukan login yang diamati agent; identitas, token dan secret tidak dicatat.
+- `bun test ./tests/auth.test.ts ./tests/metadata.test.ts`: 4 pass, 0 fail, 52 assertions. Owner/foreign session, expiry, hashed tokens, revocation, Origin, PKCE/state/nonce dan metadata boundaries diuji secara hermetic; bukan login non-owner Google nyata.
+- Browser Obscura membuka localhost:3000 tetapi klik logout tidak menghasilkan perubahan UI yang dapat diamati. Doctor offline quick: 0 fail. Tidak disimpulkan sebagai bug aplikasi. Chromium sementara dipakai setelah izin eksplisit pengguna.
+- Chromium session terpisah tanpa session owner: klik logout, pesan server ditutup muncul, main workspace dilepas, tombol buka ruang lokal kosong muncul; GET /api/session setelahnya 401. Endpoint login menghasilkan opaqueredirect dan tautan login muncul, tanpa menyalin URL OAuth/tokens. Semua sesi pemeriksaan ditutup.
+- Batas: smoke ini membuktikan logout workspace saat signed-out, bukan pencabutan session hasil login nyata. Login non-owner Google dan logout session owner nyata belum diamati; #15 tetap terbuka. #16 staging privat juga belum diklaim selesai. #22 tidak dikerjakan selama gate M2/M4 belum selesai.
+
+## M2 metadata — 6 November 2026
+
+- Pengguna mengonfirmasi login dan logout normal pada browser mereka. Agent tidak membaca cookie, token atau identitas akun.
+- Runtime localhost:3000 awalnya tidak aktif; dev server lokal dijalankan memakai konfigurasi .dev.vars existing tanpa mencetak nilainya. Browser Obscura sesi pemeriksaan: GET /api/session 401, GET /api/metadata 401, Cache-Control no-store. Tidak ada metadata ditulis atau data existing dihapus.
+- Frozen install, 29 tests (158 assertions), build dan typecheck lulus. Warning CSS sourcemap existing tetap. Tidak ada perubahan implementasi atau UI.
+- Pengguna menjalankan fetch read-only di browser login nyata: /api/session menghasilkan authenticated:true; /api/metadata menghasilkan status 200, Cache-Control no-store, Object.keys(body) berisi dua field (nama field tidak diekspansi pada output yang dibagikan). Ini bukti runtime yang dilaporkan pengguna, bukan request owner yang diamati agent. Tidak ada metadata ditulis; token/cookie/isi metadata tidak dicatat. Smoke baca owner lokal berhasil. Write/CAS melalui login nyata dan staging Cloudflare/D1 remote belum diuji atau dideploy.

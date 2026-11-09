@@ -47,3 +47,9 @@ Jangan meminta semua jawaban ini sebelum memulai M1. Catat asumsi dan lanjutkan 
 - Latihan hidup di panel note snapshot, tanpa menu baru, memakai Card/Field/Button/Select existing. Palet chalk/sage, navbar, sidebar dan theme reveal tidak diubah.
 - Ekstraksi hanya pola eksplisit satu baris dan harus melalui preview; kunci/rubrik terpisah dari soal. Warning eksplisit diperlakukan konservatif lintas note, perbedaan kode tidak dinormalisasi. Short-answer hanya exact trim/lowercase, esai review manual estimasi, bukan penilai AI.
 - Attempts state browser panel saja; attempt baru append, tidak overwrite. Close panel/navigasi note/snapshot/logout membuang state. Tidak ada persistence atau pengiriman materi baru.
+
+## Conditional save vault uji (#18)
+
+- ETag R2 menjadi expected revision, owner + exact Origin untuk writes. Browser mengenkripsi; server tidak menerima plaintext/password.
+- Arsip ciphertext create-only pada bucket histori terpisah sebelum CAS; gagal backup membatalkan write. CAS kalah boleh meninggalkan arsip redundan, bukan bukti save sukses. Timeout/provider error setelah write berstatus uncertain, tanpa retry otomatis.
+- Konflik mempertahankan draf lokal; pengguna mengambil remote lalu memilih retry eksplisit. Restore memakai backup+CAS yang sama. Gate write default nonaktif; staging diaktifkan atas izin pengguna hanya untuk fixture pada study-vault-interop, histori terpisah study-vault-interop-history. Mac–web–Mac plugin tetap release gate; bucket utama tidak dibinding.

@@ -15,9 +15,10 @@ import { Sidebar, SidebarProvider, SidebarHeader, SidebarContent, SidebarGroup, 
 import { Separator } from '@/components/ui/separator'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { LocalImport } from '@/components/local-import'
-import { OwnerSession } from '@/components/owner-session'
+import { OwnerSession, LogoutButton, useUnsavedDraft } from '@/components/owner-session'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { VaultReader } from '@/components/vault-reader'
+import { GoogleConnection } from '@/components/google-connection'
 
 type Tab = 'today' | 'courses' | 'notes' | 'connections'
 const navigation = [
@@ -26,7 +27,7 @@ const navigation = [
   { id: 'notes', label: 'Catatan', icon: FileText },
   { id: 'connections', label: 'Koneksi', icon: Link2 },
 ] as const
-export const Route = createFileRoute('/')({ component: () => <TooltipProvider><OwnerSession><Dashboard /></OwnerSession></TooltipProvider> })
+export const Route = createFileRoute('/')({ validateSearch: (search: Record<string, unknown>) => ({ tab: navigation.find(item => item.id === search.tab)?.id }), component: () => <TooltipProvider><OwnerSession><Dashboard /></OwnerSession></TooltipProvider> })
 
 function StudyNavigation({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) {
   const { setOpenMobile } = useSidebar()
@@ -40,11 +41,14 @@ function StudyNavigation({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => 
 }
 function Dashboard() {
   const [semesterId, setSemesterId] = useState('demo-s2')
-  const [tab, setTab] = useState<Tab>('today')
+  const search = Route.useSearch()
+  const [tab, setTab] = useState<Tab>(search.tab ?? 'today')
+  function changeTab(value: Tab) { setTab(value); const url = new URL(location.href); url.searchParams.set('tab', value); history.replaceState(history.state, '', url.href) }
   const [selectedNote, setSelectedNote] = useState(notes[0].id)
   const [saved, setSaved] = useState<Record<string, string>>({})
   const [draft, setDraft] = useState(notes[0].markdown)
   const [message, setMessage] = useState('')
+  useUnsavedDraft(Boolean(selectedNote && draft !== (saved[selectedNote] ?? notes.find(n => n.id === selectedNote)?.markdown)))
   const courseList = offerings.filter(c => c.semesterId === semesterId)
   const noteList = notes.filter(n => courseList.some(c => c.id === n.offeringId))
   function switchSemester(value: string) {
@@ -59,8 +63,8 @@ function Dashboard() {
   }
   const note = noteList.find(n => n.id === selectedNote)
   const heading = { today: 'Hari ini', courses: 'Mata kuliah', notes: 'Catatan & materi', connections: 'Koneksi sumber' }[tab]
-  return <SidebarProvider><StudyNavigation tab={tab} onChange={setTab} /><SidebarInset className="min-w-0">
-    <header className="flex min-h-16 shrink-0 items-center gap-2 border-b px-4 md:gap-3 md:px-8"><SidebarTrigger aria-label="Buka atau tutup navigasi" /><Separator orientation="vertical" className="h-4 data-vertical:self-center" /><span className="min-w-0 truncate text-sm font-medium">{heading}</span><div className="ml-auto flex shrink-0 items-center gap-2"><Badge variant="secondary">Ruang lokal</Badge><ThemeToggle /></div></header>
+  return <SidebarProvider><StudyNavigation tab={tab} onChange={changeTab} /><SidebarInset className="min-w-0">
+    <header className="flex min-h-16 shrink-0 items-center gap-2 border-b px-4 md:gap-3 md:px-8"><SidebarTrigger aria-label="Buka atau tutup navigasi" /><Separator orientation="vertical" className="h-4 data-vertical:self-center" /><span className="min-w-0 truncate text-sm font-medium">{heading}</span><div className="ml-auto flex shrink-0 items-center gap-1"><ThemeToggle /><LogoutButton /></div></header>
     <main id="main-content" className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-6 p-4 md:gap-8 md:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div className="flex flex-col gap-1"><p className="text-sm text-muted-foreground">Ruang belajar pribadi</p><h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{heading}</h1><p className="text-sm text-muted-foreground">{tab === 'notes' ? 'Baca sumber, simpan pemahaman, pertahankan versi asli.' : tab === 'connections' ? 'Periksa kesiapan sumber sebelum memakai data live.' : 'Satu tempat untuk melanjutkan proses belajar Anda.'}</p></div><Field className="w-full sm:w-52"><FieldLabel htmlFor="demo-semester">Semester demo</FieldLabel><Select value={semesterId} onValueChange={value => { if (value) switchSemester(value) }} items={semesters.map(s => ({ value: s.id, label: `Semester ${s.number}${s.active ? ' · Aktif' : ''}` }))}><SelectTrigger id="demo-semester" className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{semesters.map(s => <SelectItem value={s.id} key={s.id}>Semester {s.number}{s.active ? ' · Aktif' : ''}</SelectItem>)}</SelectGroup></SelectContent></Select></Field></div>
       <Alert><BookOpen aria-hidden="true" /><AlertTitle>Mode demo sintetis</AlertTitle><AlertDescription>Data demo bukan data live. Vault uji tersedia terpisah di Koneksi; Sheets, Calendar dan AI belum terhubung. Draf hanya di memori browser.</AlertDescription></Alert>
@@ -71,7 +75,7 @@ function Dashboard() {
       </>}
       {tab === 'courses' && <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-label="Mata kuliah contoh">{courseList.map(c => <Card key={c.id}><CardHeader><div className="mb-2 flex items-center justify-between gap-2"><BookOpen className="size-5 text-muted-foreground" aria-hidden="true" /><Badge variant="outline">{c.courseCode}</Badge></div><CardTitle>{c.name}</CardTitle><CardDescription>{c.credits === null ? 'SKS belum ditetapkan' : `${c.credits} SKS`} · data contoh</CardDescription></CardHeader><CardContent><p className="text-sm text-muted-foreground">Status pengumpulan belum diketahui.</p></CardContent><CardFooter><Button variant="outline" onClick={() => { const n = noteList.find(n => n.offeringId === c.id); if (n) selectNote(n.id); setTab('notes') }}><FileText data-icon="inline-start" />Buka catatan</Button></CardFooter></Card>)}</section>}
       {tab === 'notes' && <><LocalImport /><section className="grid min-w-0 gap-5 lg:grid-cols-[240px_minmax(0,1fr)]" aria-label="Editor catatan demo"><Card><CardHeader><CardTitle>Catatan contoh</CardTitle><CardDescription>Terpisah dari snapshot lokal.</CardDescription></CardHeader><CardContent className="flex flex-col gap-2">{noteList.map(n => <Button variant={n.id === selectedNote ? 'secondary' : 'ghost'} className="h-auto justify-start whitespace-normal py-3" key={n.id} aria-pressed={n.id === selectedNote} onClick={() => selectNote(n.id)}><FileText data-icon="inline-start" />{n.title}</Button>)}{!noteList.length && <p className="text-sm text-muted-foreground">Belum ada catatan contoh pada semester ini.</p>}</CardContent></Card><Card>{note ? <><CardHeader><Badge variant="outline">Editor demo · memori</Badge><CardTitle>{note.title}</CardTitle><CardDescription className="break-all">{note.path}</CardDescription></CardHeader><CardContent><Field><FieldLabel htmlFor="markdown">Isi catatan</FieldLabel><Textarea id="markdown" className="min-h-80" spellCheck={false} value={draft} onChange={e => { setDraft(e.target.value); setMessage('') }} /></Field></CardContent><CardFooter className="flex flex-col items-start gap-3"><Button onClick={() => { setSaved({ ...saved, [note.id]: draft }); setMessage('Disimpan ke memori demo. Muat ulang halaman akan menghapus perubahan.') }}><Save data-icon="inline-start" />Simpan ke memori demo</Button><p role="status" className="text-sm text-muted-foreground">{message}</p></CardFooter></> : <CardContent><Empty><EmptyHeader><EmptyTitle>Belum ada catatan contoh</EmptyTitle><EmptyDescription>Pilih semester yang memiliki catatan contoh.</EmptyDescription></EmptyHeader></Empty></CardContent>}</Card></section></>}
-      {tab === 'connections' && <><VaultReader /><section className="grid gap-4 sm:grid-cols-2" aria-label="Status koneksi">{Object.entries(integrationStates).filter(([name]) => name !== 'vault').map(([name, state]) => <Card key={name}><CardHeader><div className="flex items-center justify-between gap-2"><Link2 className="size-5 text-muted-foreground" aria-hidden="true" /><Badge variant="outline">Belum dikonfigurasi</Badge></div><CardTitle>{name}</CardTitle><CardDescription>Tidak ada operasi baca/tulis eksternal aktif.</CardDescription></CardHeader><CardContent className="flex flex-col gap-3"><code className="text-xs text-muted-foreground">{state}</code><p className="text-sm text-muted-foreground">Koneksi tersedia setelah konfigurasi dan verifikasi integrasi. Data contoh tidak diganti menjadi data live.</p></CardContent></Card>)}</section></>}
+      {tab === 'connections' && <><GoogleConnection /><VaultReader /><section className="grid gap-4 sm:grid-cols-2" aria-label="Status koneksi">{Object.entries(integrationStates).filter(([name]) => !['vault', 'sheets', 'calendar'].includes(name)).map(([name, state]) => <Card key={name}><CardHeader><div className="flex items-center justify-between gap-2"><Link2 className="size-5 text-muted-foreground" aria-hidden="true" /><Badge variant="outline">Belum dikonfigurasi</Badge></div><CardTitle>{name}</CardTitle><CardDescription>Tidak ada operasi baca/tulis eksternal aktif.</CardDescription></CardHeader><CardContent className="flex flex-col gap-3"><code className="text-xs text-muted-foreground">{state}</code><p className="text-sm text-muted-foreground">Koneksi tersedia setelah konfigurasi dan verifikasi integrasi. Data contoh tidak diganti menjadi data live.</p></CardContent></Card>)}</section></>}
       <footer className="flex flex-wrap justify-between gap-2 border-t pt-5 text-xs text-muted-foreground"><span>Study Assistant UT</span><span>Bahasa Indonesia · Asia/Jakarta</span></footer>
     </main>
   </SidebarInset></SidebarProvider>

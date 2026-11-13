@@ -7,14 +7,17 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --brand: #284c3e;
+  --brand-foreground: #ffffff;
+  --brand-hover: #203e32;
   --background: #faf9f6;
   --foreground: #24372f;
   --card: #ffffff;
   --card-foreground: #24372f;
   --popover: #ffffff;
   --popover-foreground: #24372f;
-  --primary: #284c3e;
-  --primary-foreground: #f7faed;
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
   --secondary: #dce6a7;
   --secondary-foreground: #24372f;
   --muted: #f1f0eb;
@@ -28,8 +31,8 @@
   --radius: 0.625rem;
   --sidebar: #f6f5f0;
   --sidebar-foreground: #24372f;
-  --sidebar-primary: #e4ebd8;
-  --sidebar-primary-foreground: #24372f;
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
   --sidebar-accent: #eeeee6;
   --sidebar-accent-foreground: #24372f;
   --sidebar-border: #e3e1d9;
@@ -57,8 +60,8 @@
   --ring: #a8b878;
   --sidebar: #1e2e24;
   --sidebar-foreground: #eef1e8;
-  --sidebar-primary: #dce6a7;
-  --sidebar-primary-foreground: #24372f;
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
   --sidebar-accent: #334b3d;
   --sidebar-accent-foreground: #eef1e8;
   --sidebar-border: #40513f;
@@ -66,6 +69,9 @@
 }
 
 @theme inline {
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-hover: var(--brand-hover);
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
@@ -109,7 +115,7 @@
   }
 
   body {
-    @apply m-0 bg-background font-sans text-foreground;
+    @apply m-0 bg-background font-sans text-foreground antialiased;
   }
 
   button,
@@ -129,7 +135,7 @@
 
 @layer components {
   .study-focus {
-    @apply flex items-center justify-between gap-8 rounded-xl bg-[#eeeee3] p-6 text-foreground dark:bg-primary dark:text-primary-foreground md:p-9;
+    @apply flex items-center justify-between gap-8 rounded-xl bg-brand p-6 text-brand-foreground md:p-9;
   }
 
   .path {

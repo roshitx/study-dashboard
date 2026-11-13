@@ -67,3 +67,15 @@ test('metadata rejects unauthenticated, cross-origin, oversized and arbitrary re
     expect(sqlite.query('SELECT count(*) AS count FROM academic_metadata').get()).toEqual({ count: 0 })
   } finally { sqlite.close() }
 })
+
+test('Tuton bindings persist owner-scoped and reject dangling offering references', async () => {
+  const { sqlite, env, headers } = await setup()
+  try {
+    const send = (value: unknown) => handleMetadata(new Request('https://study.example/api/metadata', { method: 'PUT', headers, body: JSON.stringify({ expectedRevision: 0, metadata: value }) }), env)
+    expect((await send({ ...metadata, tutonBindings: [{ offeringId: 'missing', sheetId: 7, sourceCourse: 'MKDI4201' }] })).status).toBe(400)
+    const bound = { ...metadata, tutonBindings: [{ offeringId: 'english-s3', sheetId: 7, sourceCourse: 'MKDI4201' }] }
+    expect((await send(bound)).status).toBe(200)
+    const read = await handleMetadata(new Request('https://study.example/api/metadata', { headers }), env)
+    expect(await read.json()).toEqual({ revision: 1, metadata: bound })
+  } finally { sqlite.close() }
+})

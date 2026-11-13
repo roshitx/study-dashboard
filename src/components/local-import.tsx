@@ -10,6 +10,7 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useUnsavedDraft } from './owner-session'
 
 export function LocalImport() {
   const [report, setReport] = useState<ImportReport | null>(null)
@@ -21,6 +22,7 @@ export function LocalImport() {
   const [dirty, setDirty] = useState(false)
   const [unexported, setUnexported] = useState(false)
   const [exportedLayers, setExportedLayers] = useState<Set<number>>(new Set())
+  useUnsavedDraft(dirty || unexported)
   useEffect(() => {
     const unload = (event: BeforeUnloadEvent) => { if (dirty || unexported) { event.preventDefault(); event.returnValue = '' } }
     const navigate = (event: MouseEvent) => {

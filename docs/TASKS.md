@@ -79,11 +79,18 @@ Depends: M2. Boleh dibangun sebelum M3 selesai. OAuth scopes, token lifecycle, r
 
 Acceptance: nilai null/0, checkbox boolean, class suffix, header/row berubah, auth expired, quota dan uncertain write diuji. Formula/format/validation tetap. Pembaruan rencana belajar tidak menandai submitted.
 
+Koneksi Google langsung tersedia lokal: grant Sheets/Calendar tersimpan, refresh token terenkripsi D1. Sheets read provider HTTP 200 terverifikasi; adapter membaca metadata dan sel native termasuk boolean/validasi serta tipe GRID/OBJECT. Planner snapshot dibatalkan atas arahan owner. Mapping Tuton #20, event #23, UI browser owner readback dan release acceptance belum selesai. Bukti/batas di VALIDATION, konfigurasi di README.
+Mapping baca-saja kini tersedia di panel hasil Sheets: koordinat header/baris native, semester/offering eksplisit, class suffix terpisah, sesi bukan modul, nilai null/0/false, OBJECT non-grid. Mapping hanya memori panel, belum persistence atau validasi referensi terhadap konfigurasi akademik D1; belum acceptance #20 penuh. Smoke sintetis dan batas dicatat di VALIDATION.
+Preview header bertingkat kini mendeteksi kelompok sesi/tanggal/aktivitas dan mata kuliah/kelas tanpa koordinat manual untuk pembacaan. Binding semester/offering tersimpan dan verifikasi deteksi sumber owner tetap gate #20; tidak ada write Google.
+Binding akademik dapat disimpan eksplisit melalui metadata owner: semester/course/offering, worksheet dan identitas kode/kelas; CAS revisi existing, konflik tanpa overwrite. Baca ulang konfigurasi memulihkan binding; verifikasi owner end-to-end tetap gate #20.
+Tracker semester tersimpan kini memakai metadata hasil read/save: memilih semester aktif, memfilter offering dan worksheet serta memblok identitas kode/class hilang atau ambigu. Verifikasi sintetis lulus; smoke owner live menyeluruh tetap gate #20.
+
 ## M5 — Google Calendar dan planner aturan
 
 Depends: M2 + data aktivitas M4 atau data snapshot eksplisit. Pilih kalender, busy ranges, StudySession, durasi/waktu tersedia, time zones, idempotent event upsert dan conflict etag. Planner memberi alasan prioritas dan preview sebelum membuat/mengubah event.
 
 Acceptance: tidak duplikat pada refresh/retry; event pribadi tak terkait tidak berubah; tanggal tanpa jam tidak punya deadline palsu; konflik jadwal terlihat.
+
 
 ## M6 — latihan dan assistant
 
@@ -99,4 +106,8 @@ Depends: milestones yang masuk scope rilis. Uji alur end-to-end, multi-semester,
 
 ## CI hermetic #28
 
-Workflow `.github/workflows/ci.yml` menjalankan frozen install, synthetic tests, build client/Worker lalu typecheck pada PR dan push main; Node 22.18.0, Bun dari packageManager, action dipin SHA, token contents read-only. Tanpa secrets, deploy, cache source atau artifact upload. Acceptance remote belum diklaim: workflow baru belum dijalankan GitHub; gate semua deliverable tetap terbuka.
+Workflow `.github/workflows/ci.yml` menjalankan frozen install, synthetic tests, build client/Worker lalu typecheck pada PR dan push main; Node 22.18.0, Bun dari packageManager, action dipin SHA, token contents read-only. Tanpa secrets, deploy, cache source atau artifact upload. Runner GitHub sudah terbukti hijau pada main ([42159750877](https://github.com/roshitx/study-dashboard/actions/runs/42159750877)) dan PR #44 ([42173445337](https://github.com/roshitx/study-dashboard/actions/runs/42173445337)); run PR memuat 36 tests/217 assertions. Pemeriksaan lokal 6 November 2026 juga lulus. #28 tetap terbuka karena dependency deliverable belum seluruhnya selesai; CI hijau bukan bukti provider, interoperabilitas atau release gate.
+
+## Issue #21 — implementasi lokal
+
+Coordinator Durable Object, endpoint update/receipt/reconcile, grant edit terpisah, binding workbook/struktur dan editor checkbox/Nilai tersedia lokal. Verifikasi sintetis tercatat di VALIDATION. Acceptance belum ditutup: migration auth/DO di tujuan belum diterapkan, owner belum memberikan consent edit, provider live write/readback dan lifecycle deployed belum diuji. Tidak boleh menutup issue atau deploy hanya berdasarkan build/tests.

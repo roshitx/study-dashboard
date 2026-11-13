@@ -53,3 +53,28 @@ Jangan meminta semua jawaban ini sebelum memulai M1. Catat asumsi dan lanjutkan 
 - ETag R2 menjadi expected revision, owner + exact Origin untuk writes. Browser mengenkripsi; server tidak menerima plaintext/password.
 - Arsip ciphertext create-only pada bucket histori terpisah sebelum CAS; gagal backup membatalkan write. CAS kalah boleh meninggalkan arsip redundan, bukan bukti save sukses. Timeout/provider error setelah write berstatus uncertain, tanpa retry otomatis.
 - Konflik mempertahankan draf lokal; pengguna mengambil remote lalu memilih retry eksplisit. Restore memakai backup+CAS yang sama. Gate write default nonaktif; staging diaktifkan atas izin pengguna hanya untuk fixture pada study-vault-interop, histori terpisah study-vault-interop-history. Mac–web–Mac plugin tetap release gate; bucket utama tidak dibinding.
+
+## Prioritas koneksi Google
+
+- Arahan terbaru pengguna membatalkan planner snapshot lokal. Implementasi, tests dan panduan import planner dihapus; koneksi Google nyata didahulukan. Import catatan M1 existing tidak termasuk pembatalan ini.
+- Grant API terpisah per layanan, baca-saja dahulu. OAuth callback tambahan /api/google/callback mengikat subject session owner; refresh token AES-GCM menggunakan secret server terpisah, bukan password vault. Google revocation dapat memutus kedua grant sehingga receipt lokal owner dibuang bersama setelah provider mengonfirmasi.
+- Tahap koneksi menampilkan inventaris provider nyata; belum mengklaim mapping Tuton #20 lengkap atau event Calendar #23. Spreadsheet allowlist server memakai GOOGLE_SHEET_ID. Tidak menambah snapshot planner pengganti.
+
+- Pembacaan Sheets dilanjutkan read-only dengan field mask metadata dan sel native Google, termasuk sheetType, nilai boolean/number/formula dan dataValidation. Tidak mengasumsikan A:AH atau mengubah sheet OBJECT menjadi tabel kosong. Mapping akademik belum ditentukan; pembacaan live bukan izin write.
+- Tracker baca-saja memakai mapping eksplisit header/identitas baris, ID semester/offering, kode registrasi dan kelas terpisah. Mapping disimpan hanya memori panel, tanpa persistence privat tambahan atau write Google; identitas sumber diperiksa kembali saat workbook dibaca ulang. Checkbox tetap nilai boolean, bukan submitted otomatis.
+
+## Update Tuton #21
+
+Checkbox native dan Nilai dapat diedit setelah grant sheetsWrite terpisah serta binding workbook/struktur tersimpan. Satu Durable Object per workbook, receipt persisten sebelum dispatch, expected value dan readback; uncertain tidak otomatis retry. Serialisasi aplikasi tidak mengunci editor eksternal. Tidak ada perubahan status planner/submitted, scope Calendar, izin write vault, provisioning atau deployment. Hanya implementasi lokal dan bukti sintetis; live owner tetap gate.
+
+## Login privat, 9 November 2026
+
+Owner menyetujui /login dua panel editorial dengan identitas existing, dashboard privat, tujuan login internal sebelumnya, expiry menutup state privat, logout sejajar tema pada satu header. Navbar sesi/Owner dihapus. Konfirmasi logout hanya ketika draf belum tersimpan/diekspor. Login Google identitas tetap terpisah grant sumber. Return destination terikat transaksi, allowlist route / dan tab dashboard. Migration auth 0004 additive. Tidak deploy/commit/reconnect. Owner menghentikan pengujian browser; jangan melanjutkan tanpa arahan baru.
+
+## Warna brand terpadu
+
+Hijau login menjadi warna brand tetap di light/dark: --brand #284c3e, --brand-foreground putih, --brand-hover #203e32. Tailwind v4 mengekspos bg-brand, text-brand-foreground, hover:bg-brand-hover. Panel login, fokus dashboard, tombol Google dan navigasi aktif memakai token ini; primary light dan sidebar-primary mereferensikannya. Primary dark tetap adaptif untuk kontrol umum. Tidak ada nilai hex hijau pada JSX; perubahan brand cukup melalui src/styles.css.
+
+## Dialog konfirmasi logout
+
+Konfirmasi native window.confirm diganti AlertDialog shadcn berbasis Base UI. Sesuai keputusan awal, dialog hanya muncul untuk draf belum tersimpan/diekspor; sesi bersih langsung logout. Judul dan peringatan menjelaskan kehilangan draf, Batal mempertahankan workspace, Keluar menjalankan alur penutupan lokal dan pencabutan sesi existing. Komponen memakai token tema existing dan tombol minimal 44px; tidak menambah dekorasi atau mengubah identitas.

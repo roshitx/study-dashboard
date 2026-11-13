@@ -5,6 +5,7 @@ import { handleAuth, requireOwner, tokenHash, type AuthDatabase, type AuthEnv } 
 async function setup() {
   const sqlite = new Database(':memory:')
   sqlite.exec(await Bun.file(new URL('../migrations-auth/0001_sessions.sql', import.meta.url)).text())
+  sqlite.exec(await Bun.file(new URL('../migrations-auth/0004_auth_return_to.sql', import.meta.url)).text())
   const db: AuthDatabase = {
     prepare(sql) {
       let values: (string | number)[] = []
@@ -24,13 +25,14 @@ test('sessions enforce owner, expiry, hashing and same-origin revocation', async
     expect((await handleAuth(request('/api/session'), env)).status).toBe(401)
     const token = 'a'.repeat(43)
     const hash = await tokenHash(token)
-    sqlite.query('INSERT INTO auth_sessions VALUES (?, ?, ?, ?)').run(hash, 'subject', 'foreign@example.test', Math.floor(Date.now() / 1000) + 600)
+    const expiresAt = Math.floor(Date.now() / 1000) + 600
+    sqlite.query('INSERT INTO auth_sessions VALUES (?, ?, ?, ?)').run(hash, 'subject', 'foreign@example.test', expiresAt)
     const headers = { Cookie: '__Host-study-session=' + token }
     expect((await handleAuth(request('/api/session', { headers }), env)).status).toBe(403)
     sqlite.query('UPDATE auth_sessions SET email = ?').run('owner@example.test')
     const authenticated = await handleAuth(request('/api/session', { headers }), env)
     expect(authenticated.status).toBe(200)
-    expect(await authenticated.json()).toEqual({ authenticated: true })
+    expect(await authenticated.json()).toEqual({ authenticated: true, expiresAt: expiresAt * 1000 })
     expect(authenticated.headers.get('Cache-Control')).toBe('no-store')
     expect(await requireOwner(request('/api/session', { headers }), env)).toEqual({ subject: 'subject' })
     expect((await handleAuth(request('/api/auth/logout', { method: 'POST', headers: { ...headers, Origin: 'https://foreign.example' } }), env)).status).toBe(403)
@@ -72,5 +74,43 @@ test('OAuth redirect binds PKCE/nonce/state to one browser and consumes callback
     expect((await handleAuth(request(callback, { headers: { Cookie: expiredLogin.headers.get('Set-Cookie')!.split(';')[0]! } }), env)).status).toBe(400)
     expect((await handleAuth(request('/api/auth/google/login?redirect=https://evil.example'), env)).status).toBe(400)
     expect((await handleAuth(new Request('https://foreign.example/api/session'), env)).status).toBe(403)
+  } finally { sqlite.close() }
+})
+
+test('login stores only permitted dashboard destinations in the browser-bound transaction', async () => {
+  const { sqlite, env } = await setup()
+  try {
+    for (const [destination, expected] of [['/?tab=notes', '/?tab=notes'], ['/', '/'], ['https://evil.example', '/'], ['//evil.example', '/'], ['/api/session', '/'], ['/login', '/'], ['/?tab=unknown', '/'], ['/?tab=notes&next=https://evil.example', '/'], ['/\\evil.example', '/']]) {
+      const login = await handleAuth(request('/api/auth/google/login?returnTo=' + encodeURIComponent(destination!)), env)
+      expect(login.status).toBe(302)
+      expect(sqlite.query('SELECT return_to FROM auth_transactions').get()).toEqual({ return_to: expected })
+      sqlite.query('DELETE FROM auth_transactions').run()
+    }
+    expect((await handleAuth(request('/api/auth/google/login?returnTo=%2F&returnTo=%2F%3Ftab%3Dnotes'), env)).status).toBe(400)
+  } finally { sqlite.close() }
+})
+
+test('document OAuth failures redirect with safe codes only after state validation', async () => {
+  const { sqlite, env } = await setup()
+  const documentHeaders = { Accept: 'text/html' }
+  try {
+    const missing = await handleAuth(request('/api/auth/google/login', { headers: documentHeaders }), {})
+    expect(missing.headers.get('Location')).toBe('/login?error=not_configured')
+    const login = await handleAuth(request('/api/auth/google/login?returnTo=%2F%3Ftab%3Dnotes', { headers: documentHeaders }), env)
+    const state = new URL(login.headers.get('Location')!).searchParams.get('state')!
+    const cookie = login.headers.get('Set-Cookie')!.split(';')[0]!
+    const invalid = await handleAuth(request('/api/auth/google/callback?error=access_denied&state=wrong', { headers: { ...documentHeaders, Cookie: cookie } }), env)
+    expect(invalid.headers.get('Location')).toBe('/login?error=invalid_callback')
+    const second = await handleAuth(request('/api/auth/google/login', { headers: documentHeaders }), env)
+    const secondState = new URL(second.headers.get('Location')!).searchParams.get('state')!
+    const secondCookie = second.headers.get('Set-Cookie')!.split(';')[0]!
+    const cancelled = await handleAuth(request('/api/auth/google/callback?error=access_denied&state=' + secondState, { headers: { ...documentHeaders, Cookie: secondCookie } }), env)
+    expect(cancelled.headers.get('Location')).toBe('/login?error=cancelled')
+    const third = await handleAuth(request('/api/auth/google/login', { headers: documentHeaders }), env)
+    const thirdState = new URL(third.headers.get('Location')!).searchParams.get('state')!
+    const thirdCookie = third.headers.get('Set-Cookie')!.split(';')[0]!
+    const unavailable = await handleAuth(request('/api/auth/google/callback?error=server_error&state=' + thirdState, { headers: { ...documentHeaders, Cookie: thirdCookie } }), env)
+    expect(unavailable.headers.get('Location')).toBe('/login?error=provider_unavailable')
+    expect((await handleAuth(request('/api/auth/google/callback?error=access_denied&state=' + state), env)).status).toBe(400)
   } finally { sqlite.close() }
 })

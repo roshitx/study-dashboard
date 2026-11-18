@@ -27,10 +27,18 @@ async function readGoogleToken(env: GoogleEnv, subject: string, service: Service
   const bytes = Uint8Array.from(atob(encrypted), v => v.charCodeAt(0))
   return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes.slice(0, 12), additionalData: new TextEncoder().encode(`${subject}:${service}`) }, await key(env), bytes.slice(12)))
 }
+const transportCauseCodes: Record<string, true> = Object.assign(Object.create(null), { EAI_AGAIN: true, ENOTFOUND: true, ECONNREFUSED: true, ECONNRESET: true, ETIMEDOUT: true, EHOSTUNREACH: true, ENETUNREACH: true, EPIPE: true, CERT_HAS_EXPIRED: true, DEPTH_ZERO_SELF_SIGNED_CERT: true, SELF_SIGNED_CERT_IN_CHAIN: true, UNABLE_TO_VERIFY_LEAF_SIGNATURE: true, ERR_TLS_CERT_ALTNAME_INVALID: true, UND_ERR_CONNECT_TIMEOUT: true, UND_ERR_HEADERS_TIMEOUT: true, UND_ERR_SOCKET: true })
+function logProviderFetchFailure(error: unknown) {
+  const errorClass = error instanceof DOMException && (error.name === 'TimeoutError' || error.name === 'AbortError') ? error.name : error instanceof DOMException ? 'DOMException' : error instanceof TypeError ? 'TypeError' : 'other'
+  const cause = error instanceof Error ? error.cause : undefined
+  const code = cause && typeof cause === 'object' && 'code' in cause ? cause.code : undefined
+  console.warn('google_provider_fetch_failed', { stage: 'provider_fetch', errorClass, causeCode: typeof code === 'string' && transportCauseCodes[code] === true ? code : 'unknown' })
+}
 async function providerJSON(url: URL, accessToken: string): Promise<Record<string, unknown>> {
   let response: Response
-  try { response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(15000), redirect: 'error' }) }
+  try { response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(15000), redirect: 'manual' }) }
   catch (error) {
+    logProviderFetchFailure(error)
     if (error instanceof TypeError || error instanceof DOMException) throw new Error('provider_unavailable')
     throw new Error('provider_error')
   }
@@ -94,7 +102,7 @@ export async function handleGoogle(request: Request, env: GoogleEnv): Promise<Re
         const grant = await env.AUTH_DB!.prepare('SELECT encrypted_token FROM google_grants WHERE subject = ? AND service = ?').bind(owner.subject, service).first<{ encrypted_token: string }>()
         if (grant) {
           const token = await readGoogleToken(env, owner.subject, service, grant.encrypted_token)
-          const revoked = await fetch('https://oauth2.googleapis.com/revoke', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token }), signal: AbortSignal.timeout(15000), redirect: 'error' })
+          const revoked = await fetch('https://oauth2.googleapis.com/revoke', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token }), signal: AbortSignal.timeout(15000), redirect: 'manual' })
           if (!revoked.ok && revoked.status !== 400) return reply({ error: 'revocation_unconfirmed' }, 502)
           // Google revocation can invalidate other grants for the same application.
           await env.AUTH_DB!.prepare('DELETE FROM google_grants WHERE subject = ?').bind(owner.subject).run()

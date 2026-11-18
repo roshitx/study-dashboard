@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { parseAcademicMetadata, type AcademicMetadata } from '@/domain/metadata'
@@ -6,18 +6,29 @@ import type { TutonDetection } from '@/domain/tuton'
 import { tutonStructure } from '@/domain/tuton-structure'
 
 interface Stored { revision: number; metadata: AcademicMetadata }
-export function TutonBinding({ spreadsheetId, sheetId, detected, onLoaded }: { spreadsheetId: string; sheetId: number; detected: TutonDetection; onLoaded?: (metadata: AcademicMetadata) => void }) {
+export function TutonBinding({ spreadsheetId, sheetId, detected, onLoaded }: { spreadsheetId: string; sheetId: number; detected: TutonDetection; onLoaded?: (metadata: AcademicMetadata, savedSemesterId?: string) => void }) {
   const [stored, setStored] = useState<Stored | null>(null)
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
-  async function load() {
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const onLoadedRef = useRef(onLoaded)
+  onLoadedRef.current = onLoaded
+  useEffect(() => {
+    let active = true
+    setBusy(true)
+    void load(undefined, () => active).catch(error => { if (active) setMessage(error instanceof Error ? error.message : 'Konfigurasi belum dapat dibaca.') }).finally(() => { if (active) setBusy(false) })
+    return () => { active = false }
+  }, [spreadsheetId, sheetId])
+  async function load(savedSemesterId?: string, isActive = () => true) {
     const response = await fetch('/api/metadata', { cache: 'no-store' })
     if (!response.ok) throw new Error('Metadata owner belum dapat dibaca. Masuk owner lalu coba lagi.')
     const value: unknown = await response.json()
     if (!value || typeof value !== 'object' || !('revision' in value) || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0 || !('metadata' in value)) throw new Error('Respons metadata tidak valid.')
     const next = { revision: Number(value.revision), metadata: parseAcademicMetadata(value.metadata) }
-    setStored(next)
-    onLoaded?.(next.metadata)
+    if (isActive()) {
+      setStored(next); onLoadedRef.current?.(next.metadata, savedSemesterId)
+      setSettingsOpen(!next.metadata.tutonBindings?.some(binding => binding.sheetId === sheetId && binding.spreadsheetId === spreadsheetId))
+    }
     return next
   }
   async function save(form: HTMLFormElement) {
@@ -47,9 +58,21 @@ export function TutonBinding({ spreadsheetId, sheetId, detected, onLoaded }: { s
       const response = await fetch('/api/metadata', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ expectedRevision: stored.revision, metadata }) })
       if (response.status === 409) throw new Error('Konfigurasi berubah di tempat lain. Baca konfigurasi lagi sebelum simpan; isian tetap dipertahankan.')
       if (!response.ok) throw new Error('Penyimpanan gagal; konfigurasi belum dikonfirmasi.')
-      await load(); setMessage('Semester, mata kuliah dan offering tersimpan. Tidak ada nilai sel atau isi catatan yang disalin.')
+      await load(semester.id); setMessage('Hubungan tersimpan. Tracker semester di bawah siap digunakan; buka mata kuliah untuk melihat atau mengubah aktivitas.')
     } catch (e) { setMessage(e instanceof Error ? e.message : 'Penyimpanan gagal.') }
     finally { setBusy(false) }
   }
-  return <section aria-label="Simpan hubungan akademik" className="flex flex-col gap-3 rounded-md border p-3"><h4 className="font-medium">Hubungkan ke semester Anda</h4><p className="text-sm text-muted-foreground">Simpan eksplisit nama/kode mata kuliah, kelas, semester dan identitas worksheet di metadata privat D1. Tidak menyimpan nilai atau mengubah Google Sheets. SKS dan kode BMP belum diketahui tetap kosong.</p><Button variant="outline" disabled={busy} onClick={() => { setBusy(true); void load().then(() => setMessage('Konfigurasi terbaru dibaca.')).catch(e => setMessage(e.message)).finally(() => setBusy(false)) }}>Baca konfigurasi tersimpan</Button>{stored && <><p className="text-sm">Revisi {stored.revision} · {stored.metadata.tutonBindings?.filter(b => b.sheetId === sheetId).length ?? 0} offering terhubung worksheet ini.</p><form className="flex flex-col gap-3" onSubmit={e => { e.preventDefault(); void save(e.currentTarget) }}><label className="text-sm">Nomor semester pribadi<Input name="semester" type="number" min={1} max={100} required /></label><label className="text-sm">Periode akademik UT (opsional)<Input name="period" maxLength={64} /></label><Button type="submit" disabled={busy || !detected.courses.length || !detected.columns.length || !!detected.warnings.length}>Simpan hubungan semester dan mata kuliah</Button></form></>}{message && <p role="status" className="text-sm">{message}</p>}</section>
+  const linkedCount = stored?.metadata.tutonBindings?.filter(binding => binding.sheetId === sheetId && binding.spreadsheetId === spreadsheetId).length ?? 0
+  return <><details open={settingsOpen} onToggle={event => setSettingsOpen(event.currentTarget.open)} className="rounded-md border p-3">
+    <summary className="min-h-11 cursor-pointer content-center rounded-sm text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">{linkedCount ? `Hubungan semester · ${linkedCount} mata kuliah terhubung` : 'Hubungkan ke semester Anda'}{busy ? ' · Memuat…' : ''}</summary>
+    <section aria-label="Simpan hubungan akademik" className="mt-3 flex flex-col gap-3">
+      <p className="text-sm text-muted-foreground">Simpan hubungan mata kuliah dan kelas ke semester pribadi. Nilai tetap di Google Sheets; SKS dan kode BMP yang belum diketahui tetap kosong.</p>
+      <Button variant="outline" disabled={busy} onClick={() => { setBusy(true); void load().then(() => setMessage('Konfigurasi terbaru dibaca.')).catch(e => setMessage(e.message)).finally(() => setBusy(false)) }}>Baca ulang konfigurasi</Button>
+      {stored && <form className="grid gap-3 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); void save(e.currentTarget) }}>
+        <label className="flex flex-col gap-2 text-sm">Nomor semester pribadi<Input name="semester" type="number" min={1} max={100} required /></label>
+        <label className="flex flex-col gap-2 text-sm">Periode akademik UT (opsional)<Input name="period" maxLength={64} /></label>
+        <Button type="submit" className="sm:col-span-2" disabled={busy || !detected.courses.length || !detected.columns.length || !!detected.warnings.length}>Simpan hubungan semester</Button>
+      </form>}
+    </section>
+  </details>{message && <p role="status" className="text-sm">{message}</p>}</>
 }

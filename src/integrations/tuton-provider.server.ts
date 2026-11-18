@@ -14,7 +14,7 @@ export function createTutonProvider(env: TutonEnv): WriteProvider {
     const url = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${env.GOOGLE_SHEET_ID}`)
     url.searchParams.set('includeGridData', 'true')
     url.searchParams.set('fields', 'spreadsheetId,sheets(properties(sheetId,title,sheetType),data(startRow,startColumn,rowData(values(userEnteredValue,effectiveValue,dataValidation))))')
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(15000), redirect: 'error' })
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(15000), redirect: 'manual' })
     if (!response.ok) throw new Error(response.status === 429 ? 'rate_limited' : response.status === 401 || response.status === 403 ? 'reconnect_required' : 'provider_error')
     const reader = response.body!.getReader(); const chunks: Uint8Array[] = []; let size = 0
     try { for (; ;) { const c = await reader.read(); if (c.done) break; size += c.value.byteLength; if (size > 2097152) throw new Error('source_too_large'); chunks.push(c.value) } } finally { await reader.cancel() }
@@ -62,7 +62,7 @@ export function createTutonProvider(env: TutonEnv): WriteProvider {
       if (current.range !== target.range || current.row !== target.row || current.column !== target.column || current.value !== input.expectedValue) throw new Error('conflict')
       const url = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${env.GOOGLE_SHEET_ID}/values/${encodeURIComponent(current.range)}`)
       url.searchParams.set('valueInputOption', 'RAW')
-      const response = await fetch(url, { method: 'PUT', headers: { Authorization: `Bearer ${current.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ range: current.range, majorDimension: 'ROWS', values: [[value === null ? '' : value]] }), signal: AbortSignal.timeout(15000), redirect: 'error' })
+      const response = await fetch(url, { method: 'PUT', headers: { Authorization: `Bearer ${current.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ range: current.range, majorDimension: 'ROWS', values: [[value === null ? '' : value]] }), signal: AbortSignal.timeout(15000), redirect: 'manual' })
       if (!response.ok) throw new Error(response.status === 429 ? 'rate_limited' : response.status === 401 || response.status === 403 ? 'reconnect_required' : 'provider_error')
       await response.body?.cancel()
     },

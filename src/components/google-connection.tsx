@@ -14,6 +14,7 @@ export function GoogleConnection() {
   const [result, setResult] = useState<unknown>(null)
   const [readState, setReadState] = useState<'idle' | 'loading' | 'ready' | 'stale' | 'error'>('idle')
   const [fetchedAt, setFetchedAt] = useState<string | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(true)
   async function refresh() {
     const response = await fetch('/api/google/status', { cache: 'no-store' })
     if (!response.ok) throw new Error(response.status === 401 ? 'Masuk sebagai owner terlebih dahulu.' : 'Konfigurasi Google belum siap atau session owner tidak valid.')
@@ -44,6 +45,7 @@ export function GoogleConnection() {
         }
         setResult(value)
         setFetchedAt(value.fetchedAt); setReadState('ready')
+        setSettingsOpen(false)
       }
       else await refresh()
     } catch (e) {
@@ -54,12 +56,15 @@ export function GoogleConnection() {
   }
   return <Card role="region" aria-label="Koneksi Google API"><CardHeader><CardTitle><h2>Google Sheets & Calendar</h2></CardTitle><CardDescription>Hubungkan akun owner langsung ke Google. Grant baca-saja terpisah dari login; token terenkripsi hanya di server. Tidak mengunggah catatan. Cabut akses dapat memutus kedua layanan.</CardDescription></CardHeader><CardContent className="flex min-w-0 flex-col gap-4">
     {error && <Alert variant="destructive"><AlertTitle>Koneksi belum siap</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
-    {connectedMessage && <p role="status" className="text-sm">{connectedMessage}</p>}
-    {!status && !error && <p role="status">Memeriksa koneksi Google…</p>}
-    {(['sheets', 'calendar'] as const).map(service => <div key={service} className="flex flex-col gap-3 border-b pb-4"><h3 className="font-medium">{service === 'sheets' ? 'Google Sheets' : 'Google Calendar'}</h3><p className="text-sm text-muted-foreground">{status?.connected[service] ? 'Grant tersimpan; baca ulang untuk memverifikasi provider.' : 'Belum terhubung.'}{service === 'sheets' && status && !status.sheetConfigured ? ' Spreadsheet allowlist belum diisi pada GOOGLE_SHEET_ID server.' : ''}</p><div className="flex flex-wrap gap-2"><Button disabled={busy || !status?.configured} onClick={() => void action(service, 'connect')}>{status?.connected[service] ? 'Hubungkan ulang' : 'Hubungkan'} {service === 'sheets' ? 'Sheets' : 'Calendar'}</Button>{status?.connected[service] && <><Button variant="outline" disabled={busy} onClick={() => void action(service, 'read')}>{service === 'sheets' ? 'Baca workbook live' : 'Baca kalender live'}</Button><Button variant="outline" disabled={busy} onClick={() => { if (window.confirm('Cabut grant Google aplikasi? Google dapat membatalkan akses kedua layanan.')) void action(service, 'disconnect') }}>Cabut akses Google</Button></>}</div></div>)}
-    <Button variant="outline" disabled={busy} onClick={() => { setError(''); void refresh().catch(e => setError(e instanceof Error ? e.message : 'Koneksi gagal.')) }}>Periksa ulang koneksi</Button>
-    {busy && <p role="status">Menghubungi Google…</p>}
-    <Button variant="outline" disabled={busy || !status?.configured} onClick={() => { if (window.confirm('Berikan aplikasi izin edit Google Sheets? Ini tidak langsung mengubah sel. Setiap update tetap memerlukan konfirmasi.')) void action('sheetsWrite', 'connect') }}>{status?.connected.sheetsWrite ? 'Perbarui izin edit Sheets' : 'Izinkan edit Sheets secara terpisah'}</Button>
+    <details open={settingsOpen} onToggle={event => setSettingsOpen(event.currentTarget.open)} className="rounded-md border p-3"><summary className="min-h-11 cursor-pointer content-center rounded-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">Pengaturan koneksi dan izin Google</summary><div className="mt-3 grid gap-4 md:grid-cols-2">
+      {connectedMessage && <p role="status" className="text-sm">{connectedMessage}</p>}
+      {!status && !error && <p role="status">Memeriksa koneksi Google…</p>}
+      {(['sheets', 'calendar'] as const).map(service => <div key={service} className="flex flex-col gap-3 border-b pb-4"><h3 className="font-medium">{service === 'sheets' ? 'Google Sheets' : 'Google Calendar'}</h3><p className="text-sm text-muted-foreground">{status?.connected[service] ? 'Grant tersimpan; baca ulang untuk memverifikasi provider.' : 'Belum terhubung.'}{service === 'sheets' && status && !status.sheetConfigured ? ' Spreadsheet allowlist belum diisi pada GOOGLE_SHEET_ID server.' : ''}</p><div className="flex flex-wrap gap-2"><Button disabled={busy || !status?.configured} onClick={() => void action(service, 'connect')}>{status?.connected[service] ? 'Hubungkan ulang' : 'Hubungkan'} {service === 'sheets' ? 'Sheets' : 'Calendar'}</Button>{status?.connected[service] && <><Button variant="outline" disabled={busy} onClick={() => void action(service, 'read')}>{service === 'sheets' ? 'Baca workbook live' : 'Baca kalender live'}</Button><Button variant="outline" disabled={busy} onClick={() => { if (window.confirm('Cabut grant Google aplikasi? Google dapat membatalkan akses kedua layanan.')) void action(service, 'disconnect') }}>Cabut akses Google</Button></>}</div></div>)}
+      <Button variant="outline" disabled={busy} onClick={() => { setError(''); void refresh().catch(e => setError(e instanceof Error ? e.message : 'Koneksi gagal.')) }}>Periksa ulang koneksi</Button>
+      {busy && <p role="status">Menghubungi Google…</p>}
+      <Button variant="outline" disabled={busy || !status?.configured} onClick={() => { if (window.confirm('Berikan aplikasi izin edit Google Sheets? Ini tidak langsung mengubah sel. Setiap update tetap memerlukan konfirmasi.')) void action('sheetsWrite', 'connect') }}>{status?.connected.sheetsWrite ? 'Perbarui izin edit Sheets' : 'Izinkan edit Sheets secara terpisah'}</Button>
+    </div></details>
+    {result !== null && <div className="flex flex-wrap items-center gap-3"><h3 className="font-medium">Data Google live</h3><Button variant="outline" disabled={busy} onClick={() => void action(typeof result === 'object' && 'spreadsheet' in result ? 'sheets' : 'calendar', 'read')}>{busy ? 'Memperbarui…' : 'Perbarui data'}</Button></div>}
     {result !== null && <p role="status" className="text-sm text-muted-foreground">{readState === 'stale' ? 'Data lama: pembacaan terbaru gagal. Hasil di bawah bukan kondisi terbaru Google.' : readState === 'loading' ? 'Memperbarui; hasil di bawah masih dari pembacaan sebelumnya.' : 'Data dari pembacaan Google terakhir.'}{fetchedAt ? ` Dibaca ${new Date(fetchedAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB.` : ''} Klik tombol baca layanan untuk memperbarui.</p>}
     {result !== null && <section aria-label="Hasil provider live"><h3 className="font-medium">Hasil Google live</h3>{typeof result === 'object' && 'spreadsheet' in result ? <SheetsTracker workbook={parseWorkbook(result.spreadsheet)} writeEnabled={status?.connected.sheetsWrite === true && readState === 'ready'} /> : <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(result, null, 2)}</pre>}</section>}
   </CardContent></Card>

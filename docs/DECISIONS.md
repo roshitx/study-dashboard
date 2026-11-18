@@ -78,3 +78,9 @@ Hijau login menjadi warna brand tetap di light/dark: --brand #284c3e, --brand-fo
 ## Dialog konfirmasi logout
 
 Konfirmasi native window.confirm diganti AlertDialog shadcn berbasis Base UI. Sesuai keputusan awal, dialog hanya muncul untuk draf belum tersimpan/diekspor; sesi bersih langsung logout. Judul dan peringatan menjelaskan kehilangan draf, Batal mempertahankan workspace, Keluar menjalankan alur penutupan lokal dan pencabutan sesi existing. Komponen memakai token tema existing dan tombol minimal 44px; tidak menambah dekorasi atau mengubah identitas.
+
+## Alur tunggal Tuton otomatis, 18 November 2026
+
+Mapping koordinat manual pada UI dihapus bersama state sesi dan handler-nya. Deteksi header, binding metadata CAS dan resolver offering existing tetap menjadi satu alur. Konfigurasi dimuat otomatis; setelah save, tracker memilih semester yang disimpan, bukan mempertahankan semester aktif lain. Editor ditempatkan dalam mata kuliah terkait agar aksi memiliki konteks. Tabel sumber tetap tersedia sebagai detail pemeriksaan. Palet, typography dan komponen existing dipertahankan (ENERGY 1 / RHYTHM 2 / MOTION 1), tanpa dekorasi atau animasi tambahan.
+
+Panel Google setelah read mengutamakan hasil dan refresh, sementara pengaturan izin menjadi disclosure. Tracker membatasi kepadatan lewat disclosure mata kuliah/sesi, bukan mengecilkan teks atau membuat area scroll bersarang untuk editor. Detail memakai native details/summary agar struktur dan kontrol dasar tersedia tanpa widget baru; status kesalahan tetap terlihat di luar disclosure.

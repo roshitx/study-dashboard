@@ -81,6 +81,58 @@ test('read distinguishes API rejection from refresh and transport failure', asyn
     expect(await refreshFailure.json()).toEqual({ error: 'refresh_unavailable' })
   } finally { globalThis.fetch = original; sqlite.close() }
 })
+test('provider transport diagnostics contain only allowlisted details', async () => {
+  const { sqlite, env, request } = await setup()
+  const originalFetch = globalThis.fetch, originalWarn = console.warn
+  const logs: unknown[][] = []
+  env.GOOGLE_SHEET_ID = 'synthetic-workbook'
+  try {
+    const encrypted = await protectGoogleToken(env, 'owner-subject', 'sheets', 'synthetic-refresh')
+    sqlite.query('INSERT INTO google_grants VALUES(?,?,?)').run('owner-subject', 'sheets', encrypted)
+    console.warn = (...args: unknown[]) => { logs.push(args) }
+    const failures = [
+      new TypeError('secret-message', { cause: Object.assign(new Error('secret-cause'), { code: 'ECONNRESET' }) }),
+      new DOMException('secret-timeout', 'TimeoutError'),
+      new TypeError('secret-message', { cause: { code: 'secret-code' } }),
+    ]
+    for (const failure of failures) {
+      globalThis.fetch = Object.assign(async (input: string | URL | Request) => {
+        if (String(input).includes('oauth2.googleapis.com')) return Response.json({ access_token: 'synthetic-access', token_type: 'Bearer', expires_in: 3600 })
+        throw failure
+      }, { preconnect: originalFetch.preconnect })
+      const response = await handleGoogle(request('read?service=sheets'), env)
+      expect(await response.json()).toEqual({ error: 'provider_unavailable' })
+    }
+    expect(logs).toEqual([
+      ['google_provider_fetch_failed', { stage: 'provider_fetch', errorClass: 'TypeError', causeCode: 'ECONNRESET' }],
+      ['google_provider_fetch_failed', { stage: 'provider_fetch', errorClass: 'TimeoutError', causeCode: 'unknown' }],
+      ['google_provider_fetch_failed', { stage: 'provider_fetch', errorClass: 'TypeError', causeCode: 'unknown' }],
+    ])
+  } finally { console.warn = originalWarn; globalThis.fetch = originalFetch; sqlite.close() }
+})
+
+test('provider redirects fail closed without forwarding credentials', async () => {
+  const { sqlite, env, request } = await setup()
+  const original = globalThis.fetch
+  let providerRequests = 0
+  env.GOOGLE_SHEET_ID = 'synthetic-workbook'
+  try {
+    const encrypted = await protectGoogleToken(env, 'owner-subject', 'sheets', 'synthetic-refresh')
+    sqlite.query('INSERT INTO google_grants VALUES(?,?,?)').run('owner-subject', 'sheets', encrypted)
+    globalThis.fetch = Object.assign(async (input: string | URL | Request, init?: RequestInit) => {
+      if (String(input).includes('oauth2.googleapis.com')) return Response.json({ access_token: 'synthetic-access', token_type: 'Bearer', expires_in: 3600 })
+      providerRequests++
+      expect(new URL(String(input)).hostname).toBe('sheets.googleapis.com')
+      expect(init?.redirect).toBe('manual')
+      return new Response(null, { status: 302, headers: { Location: 'https://untrusted.invalid/' } })
+    }, { preconnect: original.preconnect })
+    const response = await handleGoogle(request('read?service=sheets'), env)
+    expect(response.status).toBe(502)
+    expect(await response.json()).toEqual({ error: 'provider_error' })
+    expect(providerRequests).toBe(1)
+  } finally { globalThis.fetch = original; sqlite.close() }
+})
+
 
 test('invalid workbook configuration fails before contacting Google', async () => {
   const { sqlite, env, request } = await setup()

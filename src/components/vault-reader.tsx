@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { useUnsavedDraft } from './owner-session'
 
 type VaultObject = { key: string; path: string; size: number }
 type LoadedFile = { key: string; path: string; bytes: Uint8Array; revision: string }
@@ -27,6 +28,7 @@ export function VaultReader() {
   const [busy, setBusy] = useState<'unlock' | 'read' | 'save' | 'remote' | 'history' | 'recover' | null>(null)
   const [error, setError] = useState('')
   const dirty = loaded !== null && (needsRefresh || draft !== new TextDecoder().decode(loaded.bytes))
+  useUnsavedDraft(dirty)
 
   useEffect(() => () => {
     generation.current++

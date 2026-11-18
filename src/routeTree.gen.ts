@@ -10,9 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiMetadataRouteImport } from './routes/api.metadata'
 import { Route as ApiSessionRouteImport } from './routes/api.session'
 import { Route as ApiAuthLogoutRouteImport } from './routes/api.auth.logout'
+import { Route as ApiGoogleCallbackRouteImport } from './routes/api.google.callback'
+import { Route as ApiGoogleConnectRouteImport } from './routes/api.google.connect'
+import { Route as ApiGoogleDisconnectRouteImport } from './routes/api.google.disconnect'
+import { Route as ApiGoogleReadRouteImport } from './routes/api.google.read'
+import { Route as ApiGoogleReceiptRouteImport } from './routes/api.google.receipt'
+import { Route as ApiGoogleReconcileRouteImport } from './routes/api.google.reconcile'
+import { Route as ApiGoogleStatusRouteImport } from './routes/api.google.status'
+import { Route as ApiGoogleUpdateRouteImport } from './routes/api.google.update'
 import { Route as ApiVaultHistoryRouteImport } from './routes/api.vault.history'
 import { Route as ApiVaultListRouteImport } from './routes/api.vault.list'
 import { Route as ApiVaultObjectRouteImport } from './routes/api.vault.object'
@@ -22,6 +31,11 @@ import { Route as ApiAuthGoogleLoginRouteImport } from './routes/api.auth.google
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMetadataRoute = ApiMetadataRouteImport.update({
@@ -37,6 +51,46 @@ const ApiSessionRoute = ApiSessionRouteImport.update({
 const ApiAuthLogoutRoute = ApiAuthLogoutRouteImport.update({
   id: '/api/auth/logout',
   path: '/api/auth/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGoogleCallbackRoute = ApiGoogleCallbackRouteImport.update({
+  id: '/api/google/callback',
+  path: '/api/google/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGoogleConnectRoute = ApiGoogleConnectRouteImport.update({
+  id: '/api/google/connect',
+  path: '/api/google/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGoogleDisconnectRoute = ApiGoogleDisconnectRouteImport.update({
+  id: '/api/google/disconnect',
+  path: '/api/google/disconnect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGoogleReadRoute = ApiGoogleReadRouteImport.update({
+  id: '/api/google/read',
+  path: '/api/google/read',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGoogleReceiptRoute = ApiGoogleReceiptRouteImport.update({
+  id: '/api/google/receipt',
+  path: '/api/google/receipt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGoogleReconcileRoute = ApiGoogleReconcileRouteImport.update({
+  id: '/api/google/reconcile',
+  path: '/api/google/reconcile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGoogleStatusRoute = ApiGoogleStatusRouteImport.update({
+  id: '/api/google/status',
+  path: '/api/google/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGoogleUpdateRoute = ApiGoogleUpdateRouteImport.update({
+  id: '/api/google/update',
+  path: '/api/google/update',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiVaultHistoryRoute = ApiVaultHistoryRouteImport.update({
@@ -67,9 +121,18 @@ const ApiAuthGoogleLoginRoute = ApiAuthGoogleLoginRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/google/callback': typeof ApiGoogleCallbackRoute
+  '/api/google/connect': typeof ApiGoogleConnectRoute
+  '/api/google/disconnect': typeof ApiGoogleDisconnectRoute
+  '/api/google/read': typeof ApiGoogleReadRoute
+  '/api/google/receipt': typeof ApiGoogleReceiptRoute
+  '/api/google/reconcile': typeof ApiGoogleReconcileRoute
+  '/api/google/status': typeof ApiGoogleStatusRoute
+  '/api/google/update': typeof ApiGoogleUpdateRoute
   '/api/vault/history': typeof ApiVaultHistoryRoute
   '/api/vault/list': typeof ApiVaultListRoute
   '/api/vault/object': typeof ApiVaultObjectRoute
@@ -78,9 +141,18 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/google/callback': typeof ApiGoogleCallbackRoute
+  '/api/google/connect': typeof ApiGoogleConnectRoute
+  '/api/google/disconnect': typeof ApiGoogleDisconnectRoute
+  '/api/google/read': typeof ApiGoogleReadRoute
+  '/api/google/receipt': typeof ApiGoogleReceiptRoute
+  '/api/google/reconcile': typeof ApiGoogleReconcileRoute
+  '/api/google/status': typeof ApiGoogleStatusRoute
+  '/api/google/update': typeof ApiGoogleUpdateRoute
   '/api/vault/history': typeof ApiVaultHistoryRoute
   '/api/vault/list': typeof ApiVaultListRoute
   '/api/vault/object': typeof ApiVaultObjectRoute
@@ -90,9 +162,18 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/api/metadata': typeof ApiMetadataRoute
   '/api/session': typeof ApiSessionRoute
   '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/google/callback': typeof ApiGoogleCallbackRoute
+  '/api/google/connect': typeof ApiGoogleConnectRoute
+  '/api/google/disconnect': typeof ApiGoogleDisconnectRoute
+  '/api/google/read': typeof ApiGoogleReadRoute
+  '/api/google/receipt': typeof ApiGoogleReceiptRoute
+  '/api/google/reconcile': typeof ApiGoogleReconcileRoute
+  '/api/google/status': typeof ApiGoogleStatusRoute
+  '/api/google/update': typeof ApiGoogleUpdateRoute
   '/api/vault/history': typeof ApiVaultHistoryRoute
   '/api/vault/list': typeof ApiVaultListRoute
   '/api/vault/object': typeof ApiVaultObjectRoute
@@ -103,9 +184,18 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
+    | '/api/google/callback'
+    | '/api/google/connect'
+    | '/api/google/disconnect'
+    | '/api/google/read'
+    | '/api/google/receipt'
+    | '/api/google/reconcile'
+    | '/api/google/status'
+    | '/api/google/update'
     | '/api/vault/history'
     | '/api/vault/list'
     | '/api/vault/object'
@@ -114,9 +204,18 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
+    | '/api/google/callback'
+    | '/api/google/connect'
+    | '/api/google/disconnect'
+    | '/api/google/read'
+    | '/api/google/receipt'
+    | '/api/google/reconcile'
+    | '/api/google/status'
+    | '/api/google/update'
     | '/api/vault/history'
     | '/api/vault/list'
     | '/api/vault/object'
@@ -125,9 +224,18 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/login'
     | '/api/metadata'
     | '/api/session'
     | '/api/auth/logout'
+    | '/api/google/callback'
+    | '/api/google/connect'
+    | '/api/google/disconnect'
+    | '/api/google/read'
+    | '/api/google/receipt'
+    | '/api/google/reconcile'
+    | '/api/google/status'
+    | '/api/google/update'
     | '/api/vault/history'
     | '/api/vault/list'
     | '/api/vault/object'
@@ -137,9 +245,18 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
   ApiMetadataRoute: typeof ApiMetadataRoute
   ApiSessionRoute: typeof ApiSessionRoute
   ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
+  ApiGoogleCallbackRoute: typeof ApiGoogleCallbackRoute
+  ApiGoogleConnectRoute: typeof ApiGoogleConnectRoute
+  ApiGoogleDisconnectRoute: typeof ApiGoogleDisconnectRoute
+  ApiGoogleReadRoute: typeof ApiGoogleReadRoute
+  ApiGoogleReceiptRoute: typeof ApiGoogleReceiptRoute
+  ApiGoogleReconcileRoute: typeof ApiGoogleReconcileRoute
+  ApiGoogleStatusRoute: typeof ApiGoogleStatusRoute
+  ApiGoogleUpdateRoute: typeof ApiGoogleUpdateRoute
   ApiVaultHistoryRoute: typeof ApiVaultHistoryRoute
   ApiVaultListRoute: typeof ApiVaultListRoute
   ApiVaultObjectRoute: typeof ApiVaultObjectRoute
@@ -154,6 +271,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/metadata': {
@@ -175,6 +299,62 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/logout'
       fullPath: '/api/auth/logout'
       preLoaderRoute: typeof ApiAuthLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/google/callback': {
+      id: '/api/google/callback'
+      path: '/api/google/callback'
+      fullPath: '/api/google/callback'
+      preLoaderRoute: typeof ApiGoogleCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/google/connect': {
+      id: '/api/google/connect'
+      path: '/api/google/connect'
+      fullPath: '/api/google/connect'
+      preLoaderRoute: typeof ApiGoogleConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/google/disconnect': {
+      id: '/api/google/disconnect'
+      path: '/api/google/disconnect'
+      fullPath: '/api/google/disconnect'
+      preLoaderRoute: typeof ApiGoogleDisconnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/google/read': {
+      id: '/api/google/read'
+      path: '/api/google/read'
+      fullPath: '/api/google/read'
+      preLoaderRoute: typeof ApiGoogleReadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/google/receipt': {
+      id: '/api/google/receipt'
+      path: '/api/google/receipt'
+      fullPath: '/api/google/receipt'
+      preLoaderRoute: typeof ApiGoogleReceiptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/google/reconcile': {
+      id: '/api/google/reconcile'
+      path: '/api/google/reconcile'
+      fullPath: '/api/google/reconcile'
+      preLoaderRoute: typeof ApiGoogleReconcileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/google/status': {
+      id: '/api/google/status'
+      path: '/api/google/status'
+      fullPath: '/api/google/status'
+      preLoaderRoute: typeof ApiGoogleStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/google/update': {
+      id: '/api/google/update'
+      path: '/api/google/update'
+      fullPath: '/api/google/update'
+      preLoaderRoute: typeof ApiGoogleUpdateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/vault/history': {
@@ -217,9 +397,18 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
   ApiMetadataRoute: ApiMetadataRoute,
   ApiSessionRoute: ApiSessionRoute,
   ApiAuthLogoutRoute: ApiAuthLogoutRoute,
+  ApiGoogleCallbackRoute: ApiGoogleCallbackRoute,
+  ApiGoogleConnectRoute: ApiGoogleConnectRoute,
+  ApiGoogleDisconnectRoute: ApiGoogleDisconnectRoute,
+  ApiGoogleReadRoute: ApiGoogleReadRoute,
+  ApiGoogleReceiptRoute: ApiGoogleReceiptRoute,
+  ApiGoogleReconcileRoute: ApiGoogleReconcileRoute,
+  ApiGoogleStatusRoute: ApiGoogleStatusRoute,
+  ApiGoogleUpdateRoute: ApiGoogleUpdateRoute,
   ApiVaultHistoryRoute: ApiVaultHistoryRoute,
   ApiVaultListRoute: ApiVaultListRoute,
   ApiVaultObjectRoute: ApiVaultObjectRoute,

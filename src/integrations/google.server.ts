@@ -1,11 +1,12 @@
 import * as oauth from 'oauth4webapi'
 import { requireOwner, tokenHash, type AuthEnv } from './auth.server'
+import { calendarWindow, calendarInventory, calendarBusy, type CalendarWindow } from '@/domain/calendar'
 
 export interface GoogleEnv extends AuthEnv { GOOGLE_TOKEN_KEY?: string; GOOGLE_SHEET_ID?: string }
 type Service = 'sheets' | 'calendar' | 'sheetsWrite'
 const scopes = {
   sheets: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-  calendar: ['https://www.googleapis.com/auth/calendar.calendarlist.readonly'],
+  calendar: ['https://www.googleapis.com/auth/calendar.calendarlist.readonly', 'https://www.googleapis.com/auth/calendar.freebusy'],
   sheetsWrite: ['https://www.googleapis.com/auth/spreadsheets'],
 }
 const server: oauth.AuthorizationServer = { issuer: 'https://accounts.google.com', authorization_endpoint: 'https://accounts.google.com/o/oauth2/v2/auth', token_endpoint: 'https://oauth2.googleapis.com/token', jwks_uri: 'https://www.googleapis.com/oauth2/v3/certs', id_token_signing_alg_values_supported: ['RS256'] }
@@ -34,19 +35,37 @@ function logProviderFetchFailure(error: unknown) {
   const code = cause && typeof cause === 'object' && 'code' in cause ? cause.code : undefined
   console.warn('google_provider_fetch_failed', { stage: 'provider_fetch', errorClass, causeCode: typeof code === 'string' && transportCauseCodes[code] === true ? code : 'unknown' })
 }
-async function providerJSON(url: URL, accessToken: string): Promise<Record<string, unknown>> {
+async function providerJSON(url: URL, accessToken: string, body?: unknown): Promise<Record<string, unknown>> {
   let response: Response
-  try { response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(15000), redirect: 'manual' }) }
+  try { response = await fetch(url, { method: body === undefined ? 'GET' : 'POST', headers: { Authorization: `Bearer ${accessToken}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(15000), redirect: 'manual' }) }
   catch (error) {
     logProviderFetchFailure(error)
     if (error instanceof TypeError || error instanceof DOMException) throw new Error('provider_unavailable')
     throw new Error('provider_error')
   }
-  if (!response.ok) throw new Error(response.status === 429 ? 'rate_limited' : response.status === 401 ? 'access_token_rejected' : response.status === 403 ? 'provider_access_denied' : 'provider_error')
+  if (!response.ok && response.status !== 403) throw new Error(response.status === 429 ? 'rate_limited' : response.status === 401 ? 'access_token_rejected' : 'provider_error')
   const reader = response.body!.getReader(); const chunks: Uint8Array[] = []; let length = 0
   try { for (; ;) { const { value, done } = await reader.read(); if (done) break; length += value.length; if (length > 2097152) throw new Error('source_too_large'); chunks.push(value) } } finally { await reader.cancel() }
   const bytes = new Uint8Array(length); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length }
-  const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes))
+  let parsed: unknown
+  try { parsed = JSON.parse(new TextDecoder().decode(bytes)) } catch { throw new Error(response.status === 403 ? 'provider_access_denied' : 'provider_error') }
+  if (response.status === 403) {
+    const error = parsed && typeof parsed === 'object' && 'error' in parsed ? parsed.error : null
+    const reasons: unknown[] = []
+    if (error && typeof error === 'object') {
+      for (const field of ['errors', 'details'] as const) {
+        const entries = field in error ? (error as Record<string, unknown>)[field] : null
+        if (Array.isArray(entries)) for (const entry of entries) {
+          if (!entry || typeof entry !== 'object' || !('reason' in entry)) continue
+          if (field === 'details' && (entry['@type'] !== 'type.googleapis.com/google.rpc.ErrorInfo' || entry.domain !== 'googleapis.com')) continue
+          reasons.push(entry.reason)
+        }
+      }
+    }
+    if (reasons.some(reason => reason === 'SERVICE_DISABLED' || reason === 'accessNotConfigured')) throw new Error('provider_api_disabled')
+    if (reasons.some(reason => reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT' || reason === 'insufficientPermissions')) throw new Error('provider_scope_insufficient')
+    throw new Error('provider_access_denied')
+  }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('provider_error')
   return parsed as Record<string, unknown>
 }
@@ -85,12 +104,20 @@ export async function handleGoogle(request: Request, env: GoogleEnv): Promise<Re
         if (!scopes[transaction.service].every(scope => granted.has(scope)) || !tokens.refresh_token) return reply({ error: 'consent_incomplete' }, 400, headers)
         const encrypted = await protectGoogleToken(env, owner.subject, transaction.service, tokens.refresh_token)
         await env.AUTH_DB!.prepare('INSERT INTO google_grants(subject, service, encrypted_token) VALUES (?, ?, ?) ON CONFLICT(subject, service) DO UPDATE SET encrypted_token = excluded.encrypted_token').bind(owner.subject, transaction.service, encrypted).run()
+        await env.AUTH_DB!.prepare('INSERT INTO google_scope_proofs(subject, service, encrypted_token, scopes) VALUES (?, ?, ?, ?) ON CONFLICT(subject, service) DO UPDATE SET encrypted_token = excluded.encrypted_token, scopes = excluded.scopes').bind(owner.subject, transaction.service, encrypted, [...granted].join(' ')).run()
         headers.set('Location', origin + '/?tab=connections'); return reply(null, 303, headers)
       } catch { return reply({ error: 'invalid_callback' }, 400, headers) }
     }
     const service = url.searchParams.get('service')
     if (service !== 'sheets' && service !== 'calendar' && service !== 'sheetsWrite') return reply({ error: 'invalid_input' }, 400)
-    if ([...url.searchParams.keys()].some(k => k !== 'service') || url.searchParams.getAll('service').length !== 1) return reply({ error: 'invalid_input' }, 400)
+    const busyRead = request.method === 'GET' && url.pathname === '/api/google/read' && service === 'calendar' && url.searchParams.has('calendarId')
+    const allowed = busyRead ? ['service', 'calendarId', 'start', 'end'] : ['service']
+    if ([...url.searchParams.keys()].some(k => !allowed.includes(k)) || allowed.some(k => url.searchParams.getAll(k).length !== 1)) return reply({ error: 'invalid_input' }, 400)
+    let window: CalendarWindow | undefined
+    const calendarId = url.searchParams.get('calendarId')
+    if (busyRead) {
+      try { if (!calendarId || calendarId.length > 1024) throw new Error('invalid_input'); window = calendarWindow(url.searchParams.get('start')!, url.searchParams.get('end')!) } catch { return reply({ error: 'invalid_input' }, 400) }
+    }
     if (request.method === 'POST') {
       if (request.headers.get('Origin') !== origin) return reply({ error: 'forbidden' }, 403)
       if (request.body) {
@@ -106,6 +133,7 @@ export async function handleGoogle(request: Request, env: GoogleEnv): Promise<Re
           if (!revoked.ok && revoked.status !== 400) return reply({ error: 'revocation_unconfirmed' }, 502)
           // Google revocation can invalidate other grants for the same application.
           await env.AUTH_DB!.prepare('DELETE FROM google_grants WHERE subject = ?').bind(owner.subject).run()
+          await env.AUTH_DB!.prepare('DELETE FROM google_scope_proofs WHERE subject = ?').bind(owner.subject).run()
         }
         return reply(null, 204)
       }
@@ -122,16 +150,16 @@ export async function handleGoogle(request: Request, env: GoogleEnv): Promise<Re
     if (service === 'sheetsWrite') return reply({ error: 'invalid_input' }, 400)
     if (!await env.AUTH_DB!.prepare('SELECT subject FROM google_grants WHERE subject = ? AND service = ?').bind(owner.subject, service).first()) return reply({ error: 'disconnected' }, 409)
     if (service === 'sheets' && (!env.GOOGLE_SHEET_ID || !/^[A-Za-z0-9_-]{10,200}$/.test(env.GOOGLE_SHEET_ID))) return reply({ error: 'sheet_not_configured' }, 503)
-    const accessToken = await googleAccessToken(env, owner.subject, service)
+    const accessToken = await googleAccessToken(env, owner.subject, service, busyRead)
     if (service === 'calendar') {
       const target = new URL('https://www.googleapis.com/calendar/v3/users/me/calendarList'); target.searchParams.set('maxResults', '250')
       const result = await providerJSON(target, accessToken)
-      if (result.nextPageToken) return reply({ error: 'source_too_large' }, 422)
-      if (!Array.isArray(result.items)) throw new Error('provider_error')
-      const calendars = result.items.map((value: unknown) => {
-        if (!value || typeof value !== 'object' || !('id' in value) || typeof value.id !== 'string' || !('summary' in value) || typeof value.summary !== 'string' || !('accessRole' in value) || typeof value.accessRole !== 'string') throw new Error('provider_error')
-        return { id: value.id, name: value.summary, accessRole: value.accessRole, timeZone: 'timeZone' in value && typeof value.timeZone === 'string' ? value.timeZone : null }
-      })
+      const calendars = calendarInventory(result)
+      if (busyRead && window) {
+        if (!calendars.some(calendar => calendar.id === calendarId)) return reply({ error: 'calendar_not_allowed' }, 403)
+        const freeBusy = await providerJSON(new URL('https://www.googleapis.com/calendar/v3/freeBusy'), accessToken, { ...window, timeZone: 'Asia/Jakarta', calendarExpansionMax: 1, items: [{ id: calendarId }] })
+        return reply({ source: 'live', fetchedAt: new Date().toISOString(), calendarId, timeZone: 'Asia/Jakarta', ...window, busy: calendarBusy(freeBusy, calendarId!, window) })
+      }
       return reply({ source: 'live', fetchedAt: new Date().toISOString(), calendars })
     }
     const target = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${env.GOOGLE_SHEET_ID}`)
@@ -140,13 +168,13 @@ export async function handleGoogle(request: Request, env: GoogleEnv): Promise<Re
     const result = await providerJSON(target, accessToken)
     return reply({ source: 'live', fetchedAt: new Date().toISOString(), spreadsheet: result })
   } catch (error) {
-    const known = ['not_configured', 'rate_limited', 'reconnect_required', 'provider_error', 'source_too_large', 'oauth_client_error', 'provider_unavailable', 'refresh_unavailable', 'token_unreadable', 'access_token_rejected', 'provider_access_denied']
+    const known = ['not_configured', 'rate_limited', 'reconnect_required', 'provider_error', 'source_too_large', 'oauth_client_error', 'provider_unavailable', 'refresh_unavailable', 'token_unreadable', 'access_token_rejected', 'provider_access_denied', 'provider_api_disabled', 'provider_scope_insufficient', 'calendar_unavailable', 'calendar_consent_required']
     const code = error instanceof Error && known.includes(error.message) ? error.message : 'provider_error'
     return reply({ error: code }, code === 'not_configured' ? 503 : 502)
   }
 }
 
-export async function googleAccessToken(env: GoogleEnv, subject: string, service: Service): Promise<string> {
+export async function googleAccessToken(env: GoogleEnv, subject: string, service: Service, requireBusy = false): Promise<string> {
   const grant = await env.AUTH_DB!.prepare('SELECT encrypted_token FROM google_grants WHERE subject = ? AND service = ?').bind(subject, service).first<{ encrypted_token: string }>()
   if (!grant) throw new Error('reconnect_required')
   let refreshToken: string
@@ -163,6 +191,20 @@ export async function googleAccessToken(env: GoogleEnv, subject: string, service
     throw new Error('provider_error')
   }
   if (service === 'sheetsWrite' && tokens.scope !== undefined && !tokens.scope.split(' ').includes(scopes.sheetsWrite[0])) throw new Error('reconnect_required')
-  if (tokens.refresh_token && tokens.refresh_token !== refreshToken) await env.AUTH_DB!.prepare('UPDATE google_grants SET encrypted_token = ? WHERE subject = ? AND service = ? AND encrypted_token = ?').bind(await protectGoogleToken(env, subject, service, tokens.refresh_token), subject, service, grant.encrypted_token).run()
+  let effectiveScope = tokens.scope
+  if (service === 'calendar' && requireBusy && effectiveScope === undefined) {
+    const proof = await env.AUTH_DB!.prepare('SELECT scopes FROM google_scope_proofs WHERE subject = ? AND service = ? AND encrypted_token = ?').bind(subject, service, grant.encrypted_token).first<{ scopes: string }>()
+    effectiveScope = proof?.scopes
+    if (effectiveScope === undefined) throw new Error('calendar_consent_required')
+  }
+  if (service === 'calendar' && effectiveScope !== undefined) {
+    const granted = new Set(effectiveScope.split(' '))
+    if (!granted.has(scopes.calendar[0]) || (requireBusy && !granted.has(scopes.calendar[1]))) throw new Error(requireBusy ? 'calendar_consent_required' : 'reconnect_required')
+  }
+  if (tokens.refresh_token && tokens.refresh_token !== refreshToken) {
+    const encrypted = await protectGoogleToken(env, subject, service, tokens.refresh_token)
+    await env.AUTH_DB!.prepare('UPDATE google_grants SET encrypted_token = ? WHERE subject = ? AND service = ? AND encrypted_token = ?').bind(encrypted, subject, service, grant.encrypted_token).run()
+    await env.AUTH_DB!.prepare('UPDATE google_scope_proofs SET encrypted_token = ? WHERE subject = ? AND service = ? AND encrypted_token = ?').bind(encrypted, subject, service, grant.encrypted_token).run()
+  }
   return tokens.access_token
 }

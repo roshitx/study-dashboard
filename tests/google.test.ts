@@ -5,7 +5,7 @@ import { handleGoogle, protectGoogleToken, type GoogleEnv } from '../src/integra
 
 async function setup() {
   const sqlite = new Database(':memory:')
-  for (const name of ['0001_sessions.sql', '0002_google_grants.sql', '0003_sheets_write_grant.sql']) sqlite.exec(await Bun.file(new URL('../migrations-auth/' + name, import.meta.url)).text())
+  for (const name of ['0001_sessions.sql', '0002_google_grants.sql', '0003_sheets_write_grant.sql', '0004_auth_return_to.sql', '0005_google_scope_proofs.sql']) sqlite.exec(await Bun.file(new URL('../migrations-auth/' + name, import.meta.url)).text())
   const db: AuthDatabase = { prepare(sql) { let values: (string | number)[] = []; const statement = { bind(...input: (string | number)[]) { values = input; return statement }, async first<T>() { return sqlite.query(sql).get(...values) as T | null }, async run() { return sqlite.query(sql).run(...values) } }; return statement } }
   const env: GoogleEnv = { AUTH_DB: db, GOOGLE_CLIENT_ID: 'synthetic', GOOGLE_CLIENT_SECRET: 'secret', GOOGLE_REDIRECT_URI: 'https://study.example/api/auth/google/callback', AUTH_OWNER_EMAIL: 'owner@example.test', GOOGLE_TOKEN_KEY: 'ab'.repeat(32) }
   const token = 'a'.repeat(43)
@@ -188,5 +188,82 @@ test('revocation preserves grants until confirmed and never deletes the owner lo
     expect((await status.json() as { connected: unknown }).connected).toEqual({ sheets: false, calendar: false, sheetsWrite: false })
     expect(sqlite.query('SELECT count(*) AS n FROM auth_sessions').get()).toEqual({ n: 1 })
     expect((await handleGoogle(request('read?service=sheets'), env)).status).toBe(409)
+  } finally { globalThis.fetch = original; sqlite.close() }
+})
+
+test('Calendar busy reads validate owner calendar and window while old grants retain inventory access', async () => {
+  const { sqlite, env, request } = await setup()
+  const original = globalThis.fetch
+  const listScope = 'https://www.googleapis.com/auth/calendar.calendarlist.readonly'
+  let scope: string | undefined = listScope
+  let busyError = false
+  const calls: string[] = []
+  try {
+    sqlite.query('INSERT INTO google_grants VALUES(?,?,?)').run('owner-subject', 'calendar', await protectGoogleToken(env, 'owner-subject', 'calendar', 'synthetic-refresh'))
+    globalThis.fetch = Object.assign(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input); calls.push(url)
+      if (url.includes('oauth2.googleapis.com')) return Response.json({ access_token: 'synthetic', token_type: 'Bearer', scope })
+      if (url.endsWith('freeBusy')) {
+        const body = JSON.parse(String(init?.body))
+        expect(init?.method).toBe('POST')
+        expect(init?.redirect).toBe('manual')
+        expect(body).toEqual({ timeMin: '2026-11-18T00:00:00+07:00', timeMax: '2026-11-19T00:00:00+07:00', timeZone: 'Asia/Jakarta', calendarExpansionMax: 1, items: [{ id: 'selected' }] })
+        return Response.json({ timeMin: body.timeMin, timeMax: body.timeMax, calendars: { selected: busyError ? { errors: [{ reason: 'notFound' }] } : { busy: [] } } })
+      }
+      return Response.json({ items: [{ id: 'selected', summary: 'Study', accessRole: 'owner' }] })
+    }, { preconnect: original.preconnect })
+    const consent = await handleGoogle(request('connect?service=calendar', 'POST'), env)
+    expect(new URL((await consent.json() as { authorizationUrl: string }).authorizationUrl).searchParams.get('scope')).toBe('openid email ' + listScope + ' https://www.googleapis.com/auth/calendar.freebusy')
+    expect((await handleGoogle(request('read?service=calendar'), env)).status).toBe(200)
+    const query = 'read?service=calendar&calendarId=selected&start=2026-11-18&end=2026-11-19'
+    expect(await (await handleGoogle(request(query), env)).json()).toEqual({ error: 'calendar_consent_required' })
+    scope = undefined
+    calls.length = 0
+    expect(await (await handleGoogle(request(query), env)).json()).toEqual({ error: 'calendar_consent_required' })
+    expect(calls.some(url => url.endsWith('freeBusy'))).toBe(false)
+    scope = listScope + ' https://www.googleapis.com/auth/calendar.freebusy'
+    calls.length = 0
+    expect((await handleGoogle(request(query.replace('selected', 'other')), env)).status).toBe(403)
+    expect(calls.some(url => url.endsWith('freeBusy'))).toBe(false)
+    calls.length = 0
+    expect((await handleGoogle(request(query.replace('2026-11-19', '2027-11-19')), env)).status).toBe(400)
+    expect(calls).toEqual([])
+    const response = await handleGoogle(request(query), env)
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(await response.json()).toMatchObject({ source: 'live', calendarId: 'selected', timeZone: 'Asia/Jakarta', busy: [] })
+    const proof = sqlite.query('SELECT encrypted_token FROM google_grants WHERE service = ?').get('calendar') as { encrypted_token: string }
+    sqlite.query('INSERT INTO google_scope_proofs VALUES(?,?,?,?)').run('owner-subject', 'calendar', proof.encrypted_token, scope)
+    scope = undefined
+    expect((await handleGoogle(request(query), env)).status).toBe(200)
+    busyError = true
+    expect(await (await handleGoogle(request(query), env)).json()).toEqual({ error: 'calendar_unavailable' })
+  } finally { globalThis.fetch = original; sqlite.close() }
+})
+
+test('Calendar 403 distinguishes disabled API and insufficient scope without exposing provider details', async () => {
+  const { sqlite, env, request } = await setup()
+  const original = globalThis.fetch
+  try {
+    const encrypted = await protectGoogleToken(env, 'owner-subject', 'calendar', 'synthetic-refresh')
+    sqlite.query('INSERT INTO google_grants VALUES(?,?,?)').run('owner-subject', 'calendar', encrypted)
+    const cases = [
+      [{ errors: [{ reason: 'accessNotConfigured' }] }, 'provider_api_disabled'],
+      [{ errors: [{ reason: 'insufficientPermissions' }] }, 'provider_scope_insufficient'],
+      [{ errors: [{ reason: 'private-reason' }] }, 'provider_access_denied'],
+      [{ details: [{ '@type': 'type.googleapis.com/google.rpc.ErrorInfo', domain: 'googleapis.com', reason: 'SERVICE_DISABLED' }] }, 'provider_api_disabled'],
+      [{ details: [{ '@type': 'type.googleapis.com/google.rpc.ErrorInfo', domain: 'googleapis.com', reason: 'ACCESS_TOKEN_SCOPE_INSUFFICIENT' }] }, 'provider_scope_insufficient'],
+      [{ details: [{ reason: 'SERVICE_DISABLED' }] }, 'provider_access_denied'],
+      [{ details: [{ '@type': 'type.googleapis.com/google.rpc.ErrorInfo', domain: 'other.example', reason: 'SERVICE_DISABLED' }] }, 'provider_access_denied'],
+    ] as const
+    for (const [body, expected] of cases) {
+      globalThis.fetch = Object.assign(async (input: string | URL | Request) => {
+        if (String(input).includes('oauth2.googleapis.com')) return Response.json({ access_token: 'synthetic-access', token_type: 'Bearer', expires_in: 3600 })
+        return Response.json({ error: { ...body, message: 'private-provider-message', metadata: { consumer: 'private-project' } } }, { status: 403 })
+      }, { preconnect: original.preconnect })
+      const response = await handleGoogle(request('read?service=calendar'), env)
+      expect(response.status).toBe(502)
+      expect(await response.json()).toEqual({ error: expected })
+    }
   } finally { globalThis.fetch = original; sqlite.close() }
 })

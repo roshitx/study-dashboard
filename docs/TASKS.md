@@ -91,6 +91,8 @@ Depends: M2 + data aktivitas M4 atau data snapshot eksplisit. Pilih kalender, bu
 
 Acceptance: tidak duplikat pada refresh/retry; event pribadi tak terkait tidak berubah; tanggal tanpa jam tidak punya deadline palsu; konflik jadwal terlihat.
 
+Pembacaan busy ranges tersedia lokal melalui FreeBusy untuk satu kalender yang dipilih eksplisit dan diverifikasi ulang terhadap inventaris owner di server. Rentang tanggal Asia/Jakarta dibatasi 31 hari dengan akhir eksklusif; interval overlap digabung, error tidak dianggap bebas. Grant Calendar baru meminta calendarlist.readonly + calendar.freebusy; grant lama tetap dapat membaca inventaris dan pembaruan consent hanya lewat tindakan pengguna. Ini belum planner #22 atau event writes #23; consent/readback live owner tetap belum dibuktikan.
+
 
 ## M6 — latihan dan assistant
 

@@ -5,6 +5,8 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { SheetsTracker } from './sheets-tracker'
 import { parseWorkbook } from '@/domain/sheets'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
+import { CalendarBusy } from './calendar-busy'
+import { calendarInventory } from '@/domain/calendar'
 
 type Service = 'sheets' | 'calendar' | 'sheetsWrite'
 interface ConnectionStatus { connected: { sheets: boolean; calendar: boolean; sheetsWrite: boolean }; configured: boolean; sheetConfigured: boolean }
@@ -43,6 +45,9 @@ export function GoogleConnection() {
         if (service === 'sheets') {
           if (!value || typeof value !== 'object' || !('spreadsheet' in value)) throw new Error('Respons Sheets tidak valid.')
           parseWorkbook(value.spreadsheet)
+        } else if (service === 'calendar') {
+          if (!('calendars' in value)) throw new Error('Respons Calendar tidak valid.')
+          calendarInventory({ items: value.calendars }, true)
         }
         setResult(value)
         setFetchedAt(value.fetchedAt); setReadState('ready')
@@ -56,10 +61,11 @@ export function GoogleConnection() {
     finally { setBusy(false) }
   }
   return <Card role="region" aria-label="Koneksi Google API"><CardHeader><CardTitle><h2>Google Sheets & Calendar</h2></CardTitle><CardDescription>Hubungkan akun owner langsung ke Google. Grant baca-saja terpisah dari login; token terenkripsi hanya di server. Tidak mengunggah catatan. Cabut akses dapat memutus kedua layanan.</CardDescription></CardHeader><CardContent className="flex min-w-0 flex-col gap-4">
-    {error && <Alert variant="destructive"><AlertTitle>Koneksi belum siap</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
+    {error && <Alert variant="destructive"><AlertTitle>Koneksi belum siap</AlertTitle><AlertDescription>{error === 'provider_api_disabled' ? 'Google menyatakan API layanan ini belum aktif. Aktifkan API yang sesuai (Google Calendar API untuk Calendar atau Google Sheets API untuk Sheets) pada project Google Cloud yang memiliki OAuth Client aplikasi ini. Tunggu beberapa menit, lalu pilih tombol baca layanan lagi. Tidak perlu menghubungkan ulang hanya karena API belum aktif.' : error === 'provider_scope_insufficient' ? 'Google menyatakan izin akses belum mencukupi. Buka Pengaturan koneksi dan izin Google, pilih Hubungkan ulang pada layanan yang gagal, lalu setujui izin baca yang diminta. Setelah selesai, pilih tombol baca layanan lagi.' : error}</AlertDescription></Alert>}
     <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen} className="rounded-md border p-3"><CollapsibleTrigger render={<Button variant="ghost" className="min-h-11 w-full justify-start" />}>Pengaturan koneksi dan izin Google</CollapsibleTrigger><CollapsibleContent keepMounted><div className="mt-3 grid gap-4 md:grid-cols-2">
       {connectedMessage && <p role="status" className="text-sm">{connectedMessage}</p>}
       {!status && !error && <p role="status">Memeriksa koneksi Google…</p>}
+      <p className="text-sm text-muted-foreground">Hubungkan/Hubungkan ulang Calendar meminta akses daftar kalender dan interval waktu sibuk (calendar.freebusy), tanpa judul, deskripsi, peserta atau lokasi event. Tidak membuat event. Pembaruan izin hanya dimulai saat Anda memilih tombol tersebut.</p>
       {(['sheets', 'calendar'] as const).map(service => <div key={service} className="flex flex-col gap-3 border-b pb-4"><h3 className="font-medium">{service === 'sheets' ? 'Google Sheets' : 'Google Calendar'}</h3><p className="text-sm text-muted-foreground">{status?.connected[service] ? 'Grant tersimpan; baca ulang untuk memverifikasi provider.' : 'Belum terhubung.'}{service === 'sheets' && status && !status.sheetConfigured ? ' Spreadsheet allowlist belum diisi pada GOOGLE_SHEET_ID server.' : ''}</p><div className="flex flex-wrap gap-2"><Button disabled={busy || !status?.configured} onClick={() => void action(service, 'connect')}>{status?.connected[service] ? 'Hubungkan ulang' : 'Hubungkan'} {service === 'sheets' ? 'Sheets' : 'Calendar'}</Button>{status?.connected[service] && <><Button variant="outline" disabled={busy} onClick={() => void action(service, 'read')}>{service === 'sheets' ? 'Baca workbook live' : 'Baca kalender live'}</Button><Button variant="outline" disabled={busy} onClick={() => { if (window.confirm('Cabut grant Google aplikasi? Google dapat membatalkan akses kedua layanan.')) void action(service, 'disconnect') }}>Cabut akses Google</Button></>}</div></div>)}
       <Button variant="outline" disabled={busy} onClick={() => { setError(''); void refresh().catch(e => setError(e instanceof Error ? e.message : 'Koneksi gagal.')) }}>Periksa ulang koneksi</Button>
       {busy && <p role="status">Menghubungi Google…</p>}
@@ -67,6 +73,6 @@ export function GoogleConnection() {
     </div></CollapsibleContent></Collapsible>
     {result !== null && <div className="flex flex-wrap items-center gap-3"><h3 className="font-medium">Data Google live</h3><Button variant="outline" disabled={busy} onClick={() => void action(typeof result === 'object' && 'spreadsheet' in result ? 'sheets' : 'calendar', 'read')}>{busy ? 'Memperbarui…' : 'Perbarui data'}</Button></div>}
     {result !== null && <p role="status" className="text-sm text-muted-foreground">{readState === 'stale' ? 'Data lama: pembacaan terbaru gagal. Hasil di bawah bukan kondisi terbaru Google.' : readState === 'loading' ? 'Memperbarui; hasil di bawah masih dari pembacaan sebelumnya.' : 'Data dari pembacaan Google terakhir.'}{fetchedAt ? ` Dibaca ${new Date(fetchedAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB.` : ''} Klik tombol baca layanan untuk memperbarui.</p>}
-    {result !== null && <section aria-label="Hasil provider live"><h3 className="font-medium">Hasil Google live</h3>{typeof result === 'object' && 'spreadsheet' in result ? <SheetsTracker workbook={parseWorkbook(result.spreadsheet)} writeEnabled={status?.connected.sheetsWrite === true && readState === 'ready'} /> : <pre className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(result, null, 2)}</pre>}</section>}
+    {result !== null && <section aria-label="Hasil provider live"><h3 className="font-medium">Hasil Google live</h3>{typeof result === 'object' && 'spreadsheet' in result ? <SheetsTracker workbook={parseWorkbook(result.spreadsheet)} writeEnabled={status?.connected.sheetsWrite === true && readState === 'ready'} /> : typeof result === 'object' && 'calendars' in result ? <CalendarBusy key={fetchedAt} calendars={calendarInventory({ items: result.calendars }, true)} /> : null}</section>}
   </CardContent></Card>
 }

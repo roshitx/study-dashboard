@@ -321,3 +321,8 @@ Starter hanya memiliki shell UI sintetis dan editor memori. Seluruh source snaps
 - Parser latihan kini menerima opsi berawalan - [x] dan - [X] selain - [ ]. Status centang sumber tidak menjadi jawaban pengguna: opsi tetap utuh, attempt tanpa jawaban tidak dinilai pasti, dan scoring memakai kunci terpisah.
 - Regresi memakai snapshot sintetis melalui indexSnapshot/extractPractice/reviewPractice; 7 tests/34 assertions dan typecheck lulus. Tidak mengubah UI, planner/task classifier, data owner atau provider. Acceptance interaktif #24 belum dinyatakan selesai.
 - Gate penuh setelah perubahan: frozen install berhasil (no changes), 65 tests/372 assertions lulus, build dan typecheck lulus; warning sourcemap existing tetap ada. Probe regex lama/baru memastikan format A. dan - [ ] A. tetap diterima; - A. tidak didukung keduanya, sehingga tidak ada regresi syntax bullet polos. Tidak menambahkan format baru di luar checkbox tercentang.
+
+## Issue #24 — rekonsiliasi bukti deliverable, 18 November 2026
+
+- Implementasi a666b7c sudah menjadi ancestor main; dependency native #12 CLOSED. Smoke interaktif 5 November pada bagian Latihan manual tetap bukti historis untuk alur preview/answer/review, dua attempts, provenance, mobile dan logout, bukan klaim browser ulang versi terkini.
+- Commit parser f5c9643 lolos gate lokal 65 tests/372 assertions dan CI https://github.com/roshitx/study-dashboard/actions/runs/44278808382 (success). Perubahan terkini hanya memperluas pengenalan opsi checkbox; tidak mengubah komponen/state latihan. Tidak ada gate live provider untuk scope latihan manual #24. TASKS diperbarui untuk menghapus status belum commit/push yang sudah kedaluwarsa.

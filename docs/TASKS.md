@@ -98,7 +98,7 @@ Depends: reader M1; AI live setelah keputusan provider. Extract soal dan kunci d
 
 Acceptance: key hidden dahulu; checkbox opsi adalah input jawaban; warning kunci tidak cocok mencegah nilai pasti; percobaan kedua tidak menimpa pertama; feedback merujuk sumber nyata. Tanpa AI, latihan manual tetap berfungsi.
 
-Status #24 lokal: latihan dari note snapshot memiliki preview versi, pilihan ganda/isian/esai, kunci terpisah sampai review dan histori attempts selama panel terbuka. Parser konservatif satu baris, format didokumentasikan README; warning sumber atau kode berbeda memblokir penilaian pasti. Esai memakai rubrik review manual berlabel estimasi. UI existing dipertahankan; tanpa AI, upload atau persistence. Bukti tests/build/browser di VALIDATION. Belum commit/push atau menutup issue GitHub.
+Status #24: implementasi latihan manual sudah tergabung di main. Preview versi menyembunyikan kunci/rubrik sampai review; pilihan ganda/isian/esai, provenance, warning sumber dan histori attempts selama panel terbuka tersedia. Smoke interaktif sintetis 5 November tercatat di VALIDATION (termasuk dua attempts, mobile dan logout); bukan pengujian browser ulang pada versi terkini. Perbaikan opsi checkbox tercentang dipush pada f5c9643; gate penuh 65 tests/372 assertions, frozen install, build/typecheck serta CI run 44278808382 lulus. Dependency #12 selesai. Format satu baris dan histori memori tetap batas yang didokumentasikan; tidak memerlukan AI/provider atau persistence produksi untuk scope issue ini.
 
 ## M7 — release
 

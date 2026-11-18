@@ -73,7 +73,7 @@ export function extractPractice(note: IndexedNote, versionIndex: number): Practi
       continue
     }
     if (!current) continue
-    const option = /^\s*(?:-\s+\[ \]\s+)?([A-Z])\.\s+(.+?)\s*$/i.exec(line)
+    const option = /^\s*(?:-\s+\[[ xX]\]\s+)?([A-Z])\.\s+(.+?)\s*$/i.exec(line)
     if (option) { current.options.push({ id: option[1].toUpperCase(), text: option[2] }); continue }
     const field = /^\s*(Kunci|Jawaban|Rubrik|Peringatan)\s*:\s*(.*?)\s*$/i.exec(line)
     if (!field) continue

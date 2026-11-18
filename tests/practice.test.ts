@@ -69,3 +69,13 @@ test('warning outside questions blocks earlier and later keys', async () => {
   expect(reviewPractice(set, answers, 'warned').reviews.map(r => r.correct)).toEqual([null, null])
   expect(set.questions.every(q => q.warnings.includes('Kunci cetak tidak cocok'))).toBe(true)
 })
+
+test('checked source checkboxes remain answer options without preselecting a user response', async () => {
+  const set = await practice('1. Pilih warna\n- [x] A. Biru\n- [X] B. Merah\n- [ ] C. Hijau\nKunci: C\n')
+  expect(set.questions[0].kind).toBe('choice')
+  expect(set.questions[0].options).toEqual([{ id: 'A', text: 'Biru' }, { id: 'B', text: 'Merah' }, { id: 'C', text: 'Hijau' }])
+  const unanswered = reviewPractice(set, {}, 'unanswered')
+  expect(unanswered.answers).toEqual({})
+  expect(unanswered.reviews[0].correct).toBeNull()
+  expect(reviewPractice(set, { [set.questions[0].id]: 'C' }, 'answered').reviews[0].correct).toBe(true)
+})

@@ -315,3 +315,9 @@ Starter hanya memiliki shell UI sintetis dan editor memori. Seluruh source snaps
 - Regresi endpoint disconnect memakai database SQLite sementara dan respons provider sintetis: revocation HTTP 503 mempertahankan tiga grant; HTTP 200 menghapus grant Sheets/Calendar/SheetsWrite owner, status menjadi disconnected, dan sesi login owner tetap ada. Tidak mencabut grant akun nyata.
 - Gate wajib terbaru: bun install --frozen-lockfile berhasil (no changes); bun test 64 pass/0 fail, 367 assertions, 21 files; bun run build dan bun run typecheck lulus. Warning sourcemap vite:css-post existing tetap ada.
 - Inspeksi sesi Obscura issue20-acceptance melalui CDP hanya menemukan about:blank; tidak ada halaman aplikasi/sesi owner tersedia untuk smoke workbook. Sesi inspeksi ditutup; tidak reconnect, menyalin cookie/token, melakukan write provider atau deploy. Acceptance pembacaan live owner tetap belum terbukti dan issue #20 tidak ditutup.
+
+## Issue #24 — opsi checkbox sumber tercentang, 18 November 2026
+
+- Parser latihan kini menerima opsi berawalan - [x] dan - [X] selain - [ ]. Status centang sumber tidak menjadi jawaban pengguna: opsi tetap utuh, attempt tanpa jawaban tidak dinilai pasti, dan scoring memakai kunci terpisah.
+- Regresi memakai snapshot sintetis melalui indexSnapshot/extractPractice/reviewPractice; 7 tests/34 assertions dan typecheck lulus. Tidak mengubah UI, planner/task classifier, data owner atau provider. Acceptance interaktif #24 belum dinyatakan selesai.
+- Gate penuh setelah perubahan: frozen install berhasil (no changes), 65 tests/372 assertions lulus, build dan typecheck lulus; warning sourcemap existing tetap ada. Probe regex lama/baru memastikan format A. dan - [ ] A. tetap diterima; - A. tidak didukung keduanya, sehingga tidak ada regresi syntax bullet polos. Tidak menambahkan format baru di luar checkbox tercentang.

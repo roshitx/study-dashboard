@@ -265,6 +265,13 @@ Starter hanya memiliki shell UI sintetis dan editor memori. Seluruh source snaps
 - Guard khusus service sheets dipindah sebelum refresh, setelah pemeriksaan owner/grant. ID kosong/invalid kini menghasilkan 503 sheet_not_configured tanpa kontak Google. Calendar tanpa ID workbook tetap menghasilkan hasil kalender sintetis yang benar. Respons langsung tidak melewati catch; tidak diperlukan penambahan sheet_not_configured ke known.
 - Verifikasi setelah perbaikan: 59 tests/341 assertions, build dan typecheck lulus. Warning sourcemap existing tetap. Tidak membuka browser, memakai grant owner, reconnect, atau menulis workbook. Read live dan binding owner tetap belum terverifikasi.
 
+## Issue #20 — pemeriksaan lanjutan, 13 November 2026
+
+- PR #46 masih open; implementasi Google/Tuton/login telah dipush, bukan sudah merged ke main. Codebase Memory tidak memiliki indeks project ini; pemeriksaan memakai source dan tests lokal.
+- Jalur autentikasi `/api/session` pada localhost:3000 menolak request tanpa cookie dengan HTTP 401. Tidak menyalin sesi owner atau membuat bypass. Probe yang sempat dibuat untuk akses grant langsung dihapus sebelum dijalankan; tidak membaca token/workbook owner.
+- Tests terfokus Google endpoint/errors, Sheets, binding dan Tuton: 13 pass, 0 fail, 68 assertions. Node v24.1.0 tanpa kredensial mencapai endpoint OAuth (404 pada GET) dan Sheets synthetic-workbook (403); ini hanya bukti keterjangkauan host dari Node, bukan refresh token, runtime Worker atau workbook owner.
+- Tidak ditemukan penyebab baru yang terbukti; tidak mengubah implementasi atau menambah retry/reconnect spekulatif. Diagnosis berikutnya memerlukan kode error terbaru dari aksi baca melalui sesi owner, tanpa token/cookie/isi workbook. Browser tidak dibuka sesuai batas sebelumnya. Acceptance #20/#21 tetap terbuka.
+
 ## Issue #20 — diagnostik provider_unavailable, 18 November 2026
 
 - Owner kembali melaporkan `provider_unavailable` saat Baca workbook live. Vite aktif melalui Node pada port 3000; stdout/stderr menuju terminal, bukan berkas log. Log Wrangler terbaru yang ditemukan hanya mencatat startup dan pemuatan konfigurasi privat, tanpa exception request. Tidak mengklaim telah membaca stack kegagalan owner.
@@ -286,3 +293,19 @@ Starter hanya memiliki shell UI sintetis dan editor memori. Seluruh source snaps
 - Suite 61 tests/350 assertions, build/typecheck lulus. Assert render React aktual membuktikan dua sesi berbeda tertutup awal dengan konten aktivitas tetap tersedia. Detector Impeccable pada empat komponen menghasilkan [].
 - Inspeksi Obscura membuka preview sintetis dan membaca struktur aksesibilitas. Screenshot desktop/mobile keduanya gagal Runtime.callFunctionOn/getBoundingClientRect; tidak memakai fallback tanpa izin. Karena itu visual desktop/mobile, kontras dan keyboard interaktif belum dinyatakan lolos. Preview sementara dihapus, sesi ditutup; tidak ada mutasi data owner.
 - Review lanjutan: disclosure pengaturan Google dan binding kini menyimpan state buka/tutup dengan onToggle eksplisit; read sukses menutup pengaturan dan metadata menentukan pembukaan setup, sedangkan toggle pengguna memperbarui state. Suite 61 tests/350 assertions, build/typecheck kembali lulus. Interaksi browser tetap belum diverifikasi karena incompatibility yang sudah dicatat; tidak mengklaim React open sebelumnya mengunci toggle native secara mutlak.
+
+## Issue #20 — komponen disclosure Tuton, 18 November 2026
+
+- Memasang Collapsible resmi shadcn untuk Base UI Nova. Pengaturan Google, binding semester, pratinjau, mata kuliah, sel sumber dan sesi memakai Collapsible/Trigger/Content; form binding memakai FieldGroup/Field/FieldLabel existing. Panel keepMounted mempertahankan state editor/receipt ketika dilipat. Tidak mengubah protokol write atau izin Google.
+- CLI shadcn sempat mencetak Saved lockfile saat resolusi bunx; pemeriksaan berikutnya menunjukkan tidak ada diff bun.lock/package.json maupun lockfile untracked di repo. Secara terpisah, bun install --frozen-lockfile berhasil dan melaporkan no changes. Suite 61 tests/350 assertions, build dan typecheck lulus; warning sourcemap existing tetap muncul. Assert SSR komponen editor aktual membuktikan dua trigger sesi aria-expanded=false dengan panel mounted tersembunyi. Ini bukan bukti klik/keyboard atau visual browser; batas Obscura yang dicatat sebelumnya belum terselesaikan.
+- Issue #20 belum dinyatakan selesai: acceptance pembacaan menggunakan sesi owner dan alur interaktif tetap memerlukan bukti. Tidak melakukan write Google atau deploy.
+
+## Issue #20 — isolasi binding workbook, 18 November 2026
+
+- Resolver offering kini mencocokkan spreadsheetId selain semesterId dan sheetId. Workbook berbeda dengan sheetId/kode/kelas sama tidak lagi menampilkan offering milik sumber lain. Binding lama tanpa spreadsheetId tidak dianggap terverifikasi; save juga menolak klaim identitas workbook secara implisit. Kontrak metadata dan provider tetap satu sumber per offering, bukan multi-workbook; metadata tidak dihapus dan UI ini tidak menyediakan migrasi binding legacy.
+- Caller tracker dan fixture dimigrasikan. Regresi mencakup workbook berbeda dengan worksheet identik serta binding tanpa identitas workbook. Suite 61 tests/352 assertions, build dan typecheck lulus; warning sourcemap existing tetap ada. Tidak melakukan request provider atau write data owner; acceptance live issue #20 tetap terpisah.
+
+## Issue #20 — kontrak render nilai dan OBJECT, 18 November 2026
+
+- Tes komponen aktual memakai SSR: worksheet OBJECT menampilkan penjelasan unsupported tanpa tabel/form binding palsu; editor aktivitas membedakan checkbox false, nilai numerik 0 dan nilai kosong, serta tetap menyertakan peringatan bahwa checkbox bukan bukti pengumpulan.
+- Tes domain existing melindungi header sesi dinamis, suffix kelas dan nilai native; tidak diduplikasi sebagai tes source-text. Sembilan tes terkait/30 assertions dan typecheck lulus. SSR ini tidak membuktikan interaksi keyboard, fetch/save browser atau live Google. Guard save binding legacy masih belum memiliki regresi interaksi form.

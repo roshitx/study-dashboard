@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input'
 import { parseAcademicMetadata, type AcademicMetadata } from '@/domain/metadata'
 import type { TutonDetection } from '@/domain/tuton'
 import { tutonStructure } from '@/domain/tuton-structure'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 
 interface Stored { revision: number; metadata: AcademicMetadata }
 export function TutonBinding({ spreadsheetId, sheetId, detected, onLoaded }: { spreadsheetId: string; sheetId: number; detected: TutonDetection; onLoaded?: (metadata: AcademicMetadata, savedSemesterId?: string) => void }) {
@@ -50,7 +52,7 @@ export function TutonBinding({ spreadsheetId, sheetId, detected, onLoaded }: { s
         if (!offering) { offering = { id: crypto.randomUUID(), semesterId: semester.id, courseId: course.id, classId: source.classId, credits: null }; metadata.offerings.push(offering) }
         const sourceCourse = source.courseCode + (source.classId ? '.' + source.classId : '')
         const binding = metadata.tutonBindings.find(b => b.offeringId === offering.id)
-        if (binding && (binding.sheetId !== sheetId || binding.sourceCourse !== sourceCourse || (binding.spreadsheetId && binding.spreadsheetId !== spreadsheetId))) throw new Error('Binding sumber offering berbeda; tidak ditimpa otomatis.')
+        if (binding && (binding.sheetId !== sheetId || binding.sourceCourse !== sourceCourse || binding.spreadsheetId !== spreadsheetId)) throw new Error('Binding sumber offering berbeda atau identitas workbook belum terverifikasi; tidak ditimpa otomatis.')
         if (!binding) metadata.tutonBindings.push({ offeringId: offering.id, sheetId, sourceCourse, spreadsheetId, structure: tutonStructure(detected) })
         else { binding.spreadsheetId = spreadsheetId; binding.structure = tutonStructure(detected) }
       }
@@ -63,16 +65,17 @@ export function TutonBinding({ spreadsheetId, sheetId, detected, onLoaded }: { s
     finally { setBusy(false) }
   }
   const linkedCount = stored?.metadata.tutonBindings?.filter(binding => binding.sheetId === sheetId && binding.spreadsheetId === spreadsheetId).length ?? 0
-  return <><details open={settingsOpen} onToggle={event => setSettingsOpen(event.currentTarget.open)} className="rounded-md border p-3">
-    <summary className="min-h-11 cursor-pointer content-center rounded-sm text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">{linkedCount ? `Hubungan semester · ${linkedCount} mata kuliah terhubung` : 'Hubungkan ke semester Anda'}{busy ? ' · Memuat…' : ''}</summary>
-    <section aria-label="Simpan hubungan akademik" className="mt-3 flex flex-col gap-3">
-      <p className="text-sm text-muted-foreground">Simpan hubungan mata kuliah dan kelas ke semester pribadi. Nilai tetap di Google Sheets; SKS dan kode BMP yang belum diketahui tetap kosong.</p>
-      <Button variant="outline" disabled={busy} onClick={() => { setBusy(true); void load().then(() => setMessage('Konfigurasi terbaru dibaca.')).catch(e => setMessage(e.message)).finally(() => setBusy(false)) }}>Baca ulang konfigurasi</Button>
-      {stored && <form className="grid gap-3 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); void save(e.currentTarget) }}>
-        <label className="flex flex-col gap-2 text-sm">Nomor semester pribadi<Input name="semester" type="number" min={1} max={100} required /></label>
-        <label className="flex flex-col gap-2 text-sm">Periode akademik UT (opsional)<Input name="period" maxLength={64} /></label>
-        <Button type="submit" className="sm:col-span-2" disabled={busy || !detected.courses.length || !detected.columns.length || !!detected.warnings.length}>Simpan hubungan semester</Button>
-      </form>}
-    </section>
-  </details>{message && <p role="status" className="text-sm">{message}</p>}</>
+  return <><Collapsible open={settingsOpen} onOpenChange={setSettingsOpen} className="rounded-md border p-3">
+    <CollapsibleTrigger render={<Button variant="ghost" className="min-h-11 w-full justify-start whitespace-normal text-left" />}>{linkedCount ? `Hubungan semester · ${linkedCount} mata kuliah terhubung` : 'Hubungkan ke semester Anda'}{busy ? ' · Memuat…' : ''}</CollapsibleTrigger>
+    <CollapsibleContent keepMounted>
+      <section aria-label="Simpan hubungan akademik" className="mt-3 flex flex-col gap-3">
+        <p className="text-sm text-muted-foreground">Simpan hubungan mata kuliah dan kelas ke semester pribadi. Nilai tetap di Google Sheets; SKS dan kode BMP yang belum diketahui tetap kosong.</p>
+        <Button variant="outline" disabled={busy} onClick={() => { setBusy(true); void load().then(() => setMessage('Konfigurasi terbaru dibaca.')).catch(e => setMessage(e.message)).finally(() => setBusy(false)) }}>Baca ulang konfigurasi</Button>
+        {stored && <form onSubmit={e => { e.preventDefault(); void save(e.currentTarget) }}><FieldGroup>
+          <Field><FieldLabel htmlFor={`semester-${sheetId}`}>Nomor semester pribadi</FieldLabel><Input id={`semester-${sheetId}`} name="semester" type="number" min={1} max={100} required /></Field>
+          <Field><FieldLabel htmlFor={`period-${sheetId}`}>Periode akademik UT (opsional)</FieldLabel><Input id={`period-${sheetId}`} name="period" maxLength={64} /></Field>
+          <Button type="submit" disabled={busy || !detected.courses.length || !detected.columns.length || !!detected.warnings.length}>Simpan hubungan semester</Button>
+        </FieldGroup></form>}
+      </section>
+    </CollapsibleContent></Collapsible>{message && <p role="status" className="text-sm">{message}</p>}</>
 }

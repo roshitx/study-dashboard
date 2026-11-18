@@ -309,3 +309,9 @@ Starter hanya memiliki shell UI sintetis dan editor memori. Seluruh source snaps
 
 - Tes komponen aktual memakai SSR: worksheet OBJECT menampilkan penjelasan unsupported tanpa tabel/form binding palsu; editor aktivitas membedakan checkbox false, nilai numerik 0 dan nilai kosong, serta tetap menyertakan peringatan bahwa checkbox bukan bukti pengumpulan.
 - Tes domain existing melindungi header sesi dinamis, suffix kelas dan nilai native; tidak diduplikasi sebagai tes source-text. Sembilan tes terkait/30 assertions dan typecheck lulus. SSR ini tidak membuktikan interaksi keyboard, fetch/save browser atau live Google. Guard save binding legacy masih belum memiliki regresi interaksi form.
+
+## Issue #20 — lifecycle revocation dan gate lokal, 18 November 2026
+
+- Regresi endpoint disconnect memakai database SQLite sementara dan respons provider sintetis: revocation HTTP 503 mempertahankan tiga grant; HTTP 200 menghapus grant Sheets/Calendar/SheetsWrite owner, status menjadi disconnected, dan sesi login owner tetap ada. Tidak mencabut grant akun nyata.
+- Gate wajib terbaru: bun install --frozen-lockfile berhasil (no changes); bun test 64 pass/0 fail, 367 assertions, 21 files; bun run build dan bun run typecheck lulus. Warning sourcemap vite:css-post existing tetap ada.
+- Inspeksi sesi Obscura issue20-acceptance melalui CDP hanya menemukan about:blank; tidak ada halaman aplikasi/sesi owner tersedia untuk smoke workbook. Sesi inspeksi ditutup; tidak reconnect, menyalin cookie/token, melakukan write provider atau deploy. Acceptance pembacaan live owner tetap belum terbukti dan issue #20 tidak ditutup.

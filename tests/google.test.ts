@@ -167,3 +167,26 @@ test('Calendar reads do not require a configured workbook', async () => {
     expect(result.calendars).toEqual([{ id: 'synthetic-calendar', name: 'Belajar', accessRole: 'owner', timeZone: 'Asia/Jakarta' }])
   } finally { globalThis.fetch = original; sqlite.close() }
 })
+
+test('revocation preserves grants until confirmed and never deletes the owner login', async () => {
+  const { sqlite, env, request } = await setup()
+  const original = globalThis.fetch
+  try {
+    for (const service of ['sheets', 'calendar', 'sheetsWrite'] as const) {
+      sqlite.query('INSERT INTO google_grants VALUES(?,?,?)').run('owner-subject', service, await protectGoogleToken(env, 'owner-subject', service, 'synthetic-refresh'))
+    }
+    let providerStatus = 503
+    globalThis.fetch = Object.assign(async () => new Response(null, { status: providerStatus }), { preconnect: original.preconnect })
+    const unconfirmed = await handleGoogle(request('disconnect?service=sheets', 'POST'), env)
+    expect(unconfirmed.status).toBe(502)
+    expect(await unconfirmed.json()).toEqual({ error: 'revocation_unconfirmed' })
+    expect(sqlite.query('SELECT count(*) AS n FROM google_grants').get()).toEqual({ n: 3 })
+    providerStatus = 200
+    expect((await handleGoogle(request('disconnect?service=sheets', 'POST'), env)).status).toBe(204)
+    const status = await handleGoogle(request('status'), env)
+    expect(status.status).toBe(200)
+    expect((await status.json() as { connected: unknown }).connected).toEqual({ sheets: false, calendar: false, sheetsWrite: false })
+    expect(sqlite.query('SELECT count(*) AS n FROM auth_sessions').get()).toEqual({ n: 1 })
+    expect((await handleGoogle(request('read?service=sheets'), env)).status).toBe(409)
+  } finally { globalThis.fetch = original; sqlite.close() }
+})
